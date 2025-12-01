@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Host Page</title>
+    <link rel="stylesheet" href="host.css">
+</head>
+<body>
+
+    <h1 class="title">Host Game</h1>
+
+    <div class="container">
+        <div class="dropdown-box">
+            <label>No. of Players</label>
+            <select id="playersSelect">
+                <option value="">Select</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+            </select>
+
+            <label>No. of Cluecards</label>
+            <select id="clueSelect">
+                <option value="">Select</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+            </select>
+        </div>
+
+        <button id="makeGameBtn" class="btn">Make Game</button>
+
+        <!-- Stores the error generation -->
+        <div id="errorBox" class="error-box">
+            (Write in potential form errors here)
+        </div>
+    </div>
+
+    
+    <script src="host.js"></script>
+</body>
+</html>
