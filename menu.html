@@ -3,9 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Who Dunnit?</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="menu.js"></script>
 </head>
 <body>
-    
+    <div class="page">
+        <aside class="left">
+            <div class="left-inner">
+                <h1>Who Dunnit?</h1>
+                <div class="initial">
+                    <button class="btn primary">Host Game</button>
+                    <button class="btn">Join Game</button>
+                    <button class="btn ghost">Handbook</button>
+                </div>
+            </div>
+        </aside>
+
+        <main class="right">
+            <section class="stats">
+                <h2>Stats</h2>
+                <!-- Slideshow container -->
+                <div class="slideshow-container">
+                    <div class="slideshow-track">
+                        <!-- Full image with number and caption text -->
+                        <div class="mySlides">
+                            <img src="assets/Mustard.png" alt="char" class="slide-img" id="img1">
+                            <div class="text"><span id="name">Name</span> has been the murderer <span id="count1">x</span> times today</div>
+                        </div>
+
+                        <div class="mySlides">
+                            <img src="assets/pistol.png" alt="weap" class="slide-img" id="img2">
+                            <div class="text"><span id="weapon-text">Weapon</span> has been the murder weapon for <span id="count2">y</span> games</div>
+                        </div>
+
+                        <div class="mySlides">
+                            <img src="assets/Door.png" alt="door" class="slide-img" id="img3">
+                            <div class="text">Dr. White has been killed in the <span id="room">Room</span> <span id="count3">z</span> times</div>
+                        </div>
+                    </div>
+
+                    <!-- Next and previous buttons -->
+                    <a class="prev" onclick="plusSlides(-1)">&#10094;</a>
+                    <a class="next" onclick="plusSlides(1)">&#10095;</a>
+                </div>
+                <div class="dots-wrap" aria-hidden="true">
+                    <span class="dot" onclick="currentSlide(1)"></span>
+                    <span class="dot" onclick="currentSlide(2)"></span>
+                    <span class="dot" onclick="currentSlide(3)"></span>
+                </div>
+            </section>
+
+            <section class="leaderboard">
+                <h2>Leaderboard</h2>
+                <!-- Ranking formatting -->
+                <div class="leaderboard-content">
+                    <p>Top players will show here...</p>
+                </div>
+            </section>
+        </main>
+    </div>
 </body>
 </html>
