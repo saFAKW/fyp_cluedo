@@ -23,6 +23,8 @@ document.getElementById("joinGameBtn").addEventListener("click", () => {
 
 socket.on('join_success', function(data) {
     alert("Success! You joined room: " + data.room);
+    // navigate to pick page after successful join
+    window.location.href = 'pick.html';
 });
 
 socket.on('error_msg', function(data) {

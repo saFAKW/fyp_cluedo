@@ -12,8 +12,13 @@ document.getElementById("makeGameBtn").addEventListener("click", function () {
 
     socket.emit('create_game', { players: players, clues: clues });
     errorBox.textContent = "Creating game...";
+    // immediately navigate to pick page so host can continue without waiting
+    // (server confirmation will still redirect on 'game_created')
+    window.location.href = 'pick.html';
 });
 
 socket.on('game_created', function(data) {
     alert("Room Created! Code: " + data.room);
+    // navigate to pick page so host can pick a character
+    window.location.href = 'pick.html';
 });
