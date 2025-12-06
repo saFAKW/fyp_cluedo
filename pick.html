@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <title>Pick Player</title>
-    <script src="pick.js"></script>
     <link rel="stylesheet" href="pick.css">
 </head>
 <body>
@@ -25,5 +24,10 @@
         <br>
         <button id="joinBtn">Join Game</button>
     </div>
+    
+    <!-- Load Socket.IO FIRST -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <!-- Then load your script -->
+    <script src="pick.js"></script>
 </body>
 </html>

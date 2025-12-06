@@ -18,6 +18,12 @@ h2 {
     margin-bottom: 30px;
 }
 
+.players-title {
+    font-size: 26px;
+    font-style: italic;
+    margin-bottom: 20px;
+}
+
 .players-box {
     background: #dcdcdc;
     width: 60%;
@@ -26,12 +32,10 @@ h2 {
     border-radius: 25px;
     min-height: 200px;
     position: relative;
-}
-
-.players-title {
-    margin-top: 40px;
-    font-size: 26px;
-    font-style: italic;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
 }
 
 /* Player pill */
@@ -39,11 +43,11 @@ h2 {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    width: fit-content;
+    width: 80%;
+    max-width: 500px;
     background: #8fb3ff;
     padding: 12px 18px;
     border-radius: 40px;
-    margin-bottom: 10px;
     gap: 15px;
     font-size: 15px;
 }
@@ -60,23 +64,45 @@ h2 {
 
 .player-info {
     text-align: left;
-    line-height: 1.2;
+    line-height: 1.4;
     font-family: Arial, sans-serif;
+    flex: 1;
+}
+
+.player-info strong {
+    font-size: 16px;
+    display: block;
+}
+
+.player-info span {
+    font-size: 14px;
+    color: #333;
 }
 
 .remove-btn {
     background: #ff5c5c;
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     border: none;
     cursor: pointer;
     font-weight: bold;
     color: white;
-    font-size: 16px;
+    font-size: 18px;
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: background 0.2s ease, transform 0.1s ease;
+    flex-shrink: 0;
+}
+
+.remove-btn:hover {
+    background: #ff3333;
+    transform: scale(1.1);
+}
+
+.remove-btn:active {
+    transform: scale(0.95);
 }
 
 #startGame {
@@ -88,6 +114,7 @@ h2 {
     color: white;
     font-size: 20px;
     cursor: pointer;
+    transition: background 0.2s ease;
 }
 
 #startGame:hover {

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Host Game</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 <script src="wait.js"></script>
 <link rel="stylesheet" href="wait.css">
 </head>
@@ -14,13 +14,13 @@
 <div class="side-text right-side">Tips Gameplay Tips Gameplay Tips Gameplay</div>
 
 <h1>Host Game</h1>
-<h2>(Host Code)</h2>
-
-<div class="players-box" id="playersBox">
-    <!-- Players appear here -->
-</div>
+<h2 id="roomCode">(Host Code)</h2>
 
 <div class="players-title">Names of Players Joined</div>
+
+<div class="players-box" id="playersBox">
+    <p style="color: #999; font-style: italic;">Waiting for players to join...</p>
+</div>
 
 <button id="startGame">Start Game</button>
 
