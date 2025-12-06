@@ -71,8 +71,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                 const displayName = selectedName || selectedColor || 'Unknown';
                 alert(`Player Joined!\nName: ${name}\nCharacter: ${displayName}`);
-                // after joining successfully, navigate to main game page
-                window.location.href = 'main.html';
+                // emit player_join event to server with room info (read from query param)
+                const params = new URLSearchParams(window.location.search);
+                const room = params.get('room');
+                if (typeof io !== 'undefined') {
+                    const SERVER_URL = 'http://127.0.0.1:5000';
+                    const socket = io(SERVER_URL);
+                    socket.emit('player_join', { room: room, name: name, character: displayName });
+                }
+
+                // redirect to wait page (host game page) so host and players see the waiting lobby
+                window.location.href = `wait.html?room=${room}`;
             }
         });
     }

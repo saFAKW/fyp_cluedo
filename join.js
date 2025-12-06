@@ -1,4 +1,5 @@
-const socket = io();
+const SERVER_URL = 'http://127.0.0.1:5000';
+const socket = io(SERVER_URL);
 const boxes = document.querySelectorAll(".code-box");
 
 boxes.forEach((box, index) => {
@@ -23,8 +24,8 @@ document.getElementById("joinGameBtn").addEventListener("click", () => {
 
 socket.on('join_success', function(data) {
     alert("Success! You joined room: " + data.room);
-    // navigate to pick page after successful join
-    window.location.href = 'pick.html';
+    // navigate to pick page after successful join and pass room code
+    window.location.href = `pick.html?room=${data.room}`;
 });
 
 socket.on('error_msg', function(data) {

@@ -4,7 +4,7 @@ import random, string
 
 app = Flask(__name__, template_folder='.', static_folder='.', static_url_path='')
 app.config['SECRET_KEY'] = 'secret'
-socketio = SocketIO(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 rooms = {}
 
@@ -22,7 +22,11 @@ def generate_code():
 @socketio.on('create_game')
 def handle_create(data):
     room = generate_code()
-    rooms[room] = data
+    # initialize room state including players list
+    rooms[room] = {
+        'meta': data,
+        'players': []
+    }
     join_room(room)
     print(f"Room Created: {room}")
     emit('game_created', {'room': room})
@@ -37,5 +41,22 @@ def handle_join(data):
     else:
         emit('error_msg', {'msg': "Invalid Room Code"})
 
+
+@socketio.on('player_join')
+def handle_player_join(data):
+    """Data must include: room, name, character"""
+    room = data.get('room')
+    name = data.get('name')
+    character = data.get('character')
+    if not room or room not in rooms:
+        emit('error_msg', {'msg': 'Invalid Room Code'})
+        return
+
+    player = {'name': name, 'character': character}
+    rooms[room]['players'].append(player)
+    print(f"Player joined room {room}: {player}")
+    # broadcast to everyone in the room that a player has joined
+    socketio.emit('player_joined', {'player': player, 'players': rooms[room]['players']}, room=room)
+
 if __name__ == '__main__':
-    socketio.run(app, debug=True)
+    socketio.run(app, host='0.0.0.0', port=5000, debug=True)

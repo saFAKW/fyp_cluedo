@@ -1,4 +1,5 @@
-const socket = io();
+const SERVER_URL = 'http://127.0.0.1:5000';
+const socket = io(SERVER_URL);
 
 document.getElementById("makeGameBtn").addEventListener("click", function () {
     const players = document.getElementById("playersSelect").value;
@@ -12,13 +13,11 @@ document.getElementById("makeGameBtn").addEventListener("click", function () {
 
     socket.emit('create_game', { players: players, clues: clues });
     errorBox.textContent = "Creating game...";
-    // immediately navigate to pick page so host can continue without waiting
-    // (server confirmation will still redirect on 'game_created')
-    window.location.href = 'pick.html';
+    // wait for server confirmation (game_created) which will redirect host to the wait page
 });
 
 socket.on('game_created', function(data) {
     alert("Room Created! Code: " + data.room);
-    // navigate to pick page so host can pick a character
-    window.location.href = 'pick.html';
+    // navigate to wait page so host can monitor joined players; mark host=1 in query
+    window.location.href = `wait.html?room=${data.room}&host=1`;
 });
