@@ -1,17 +1,19 @@
+const socket = io();
+
 document.getElementById("makeGameBtn").addEventListener("click", function () {
     const players = document.getElementById("playersSelect").value;
     const clues = document.getElementById("clueSelect").value;
     const errorBox = document.getElementById("errorBox");
 
-    // Validate selections
     if (!players || !clues) {
-        errorBox.textContent = "Please select both the number of players and cluecards.";
+        errorBox.textContent = "Please select both options.";
         return;
     }
 
-    // These can later be used by the backeend to set up the game
-    localStorage.setItem("playerCount", players);
-    localStorage.setItem("clueCount", clues);
+    socket.emit('create_game', { players: players, clues: clues });
+    errorBox.textContent = "Creating game...";
+});
 
-    errorBox.textContent = "Game created! Redirecting…";
+socket.on('game_created', function(data) {
+    alert("Room Created! Code: " + data.room);
 });
