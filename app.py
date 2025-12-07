@@ -1,8 +1,13 @@
 from flask import Flask, render_template
 from flask_socketio import SocketIO, join_room, emit
-import random, string
+import random, string, os
 
-app = Flask(__name__, template_folder='.', static_folder='.', static_url_path='')
+basedir = os.path.abspath(os.path.dirname(__file__))
+
+app = Flask(__name__, 
+            template_folder=basedir,    # 网页在这里
+            static_folder=basedir,      # JS/CSS 也在这里
+            static_url_path='')         # 引用时不加前缀
 app.config['SECRET_KEY'] = 'secret'
 socketio = SocketIO(app)
 
@@ -15,7 +20,7 @@ def index():
 @app.route('/join')
 def join_page():
     return render_template('join.html')
-
+    
 def generate_code():
     return ''.join(random.choices(string.digits, k=6))
 
