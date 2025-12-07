@@ -12,8 +12,9 @@ document.getElementById("makeGameBtn").addEventListener("click", function () {
 
     socket.emit('create_game', { players: players, clues: clues });
     errorBox.textContent = "Creating game...";
+    errorBox.style.color = "blue"; 
 });
 
 socket.on('game_created', function(data) {
-    alert("Room Created! Code: " + data.room);
+    window.location.href = "/game?room=" + data.room;
 });
