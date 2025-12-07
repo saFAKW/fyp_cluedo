@@ -1,13 +1,13 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 from flask_socketio import SocketIO, join_room, emit
 import random, string, os
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__, 
-            template_folder=basedir,    # 网页在这里
-            static_folder=basedir,      # JS/CSS 也在这里
-            static_url_path='')         # 引用时不加前缀
+            template_folder=basedir,
+            static_folder=basedir,
+            static_url_path='')
 app.config['SECRET_KEY'] = 'secret'
 socketio = SocketIO(app)
 
@@ -15,12 +15,21 @@ rooms = {}
 
 @app.route('/')
 def index():
+    return render_template('menu.html')
+
+@app.route('/host')
+def host_page():
     return render_template('host.html')
 
 @app.route('/join')
 def join_page():
     return render_template('join.html')
-    
+
+@app.route('/game')
+def game_page():
+    room_code = request.args.get('room')
+    return render_template('main.html', room_code=room_code)
+
 def generate_code():
     return ''.join(random.choices(string.digits, k=6))
 
@@ -43,4 +52,4 @@ def handle_join(data):
         emit('error_msg', {'msg': "Invalid Room Code"})
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True)
+    socketio.run(app, debug=True, host='0.0.0.0')
