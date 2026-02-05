@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('Connected to server');
     });
 
+<<<<<<< HEAD
     socket.on('connect_error', (error) => {
         console.error('Connection failed:', error);
         document.getElementById("errorBox").textContent = "Cannot connect to server. Make sure server is running.";
@@ -33,3 +34,13 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.href = `wait.html?room=${data.room}&host=1`;
     });
 });
+=======
+    socket.emit('create_game', { players: players, clues: clues });
+    errorBox.textContent = "Creating game...";
+    errorBox.style.color = "blue"; 
+});
+
+socket.on('game_created', function(data) {
+    window.location.href = "/game?room=" + data.room;
+});
+>>>>>>> main
