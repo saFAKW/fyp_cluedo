@@ -1,0 +1,105 @@
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    padding-top: 24px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* center everything except the title (which remains above) */
+.content {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+}
+
+h1 {
+    font-size: 64px;
+    margin-bottom: 20px;
+    font-weight: 700;
+}
+
+.circle-container {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+    width: auto;
+    margin: 0 auto 25px;
+}
+
+.circle {
+    width: 240px;
+    height: 240px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid transparent;
+    transition: transform 0.12s ease, border 0.12s ease;
+}
+
+/* images should cover the circle area */
+.circle {
+    display: block;
+    object-fit: cover;
+}
+
+.circle.selected {
+    border: 6px solid black;
+    transform: scale(1.05);
+}
+
+/* hover: float upward slightly */
+.circle:hover {
+    transform: translateY(-2px);
+}
+
+/* keep selection scale when hovering a selected circle */
+.circle.selected:hover {
+    transform: translateY(-2px) scale(1.05);
+}
+
+/* hide greeting + input + join until a character is selected */
+#greeting, #playerName, #joinBtn {
+    display: none;
+}
+
+.greeting {
+    font-size: 20px;
+    font-weight: 600;
+    color: #222;
+    margin-bottom: 6px;
+}
+
+input {
+    padding: 16px 18px;
+    width: 360px;
+    max-width: 90%;
+    border-radius: 8px;
+    border: 1px solid #aaa;
+    font-size: 16px;
+}
+
+button {
+    margin-top: 20px;
+    padding: 14px 40px;
+    border: none;
+    border-radius: 8px;
+    background: #222;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    transition: transform 0.12s ease, background 0.12s ease;
+}
+
+button:hover {
+    background: #333;
+}
+
+/* move button up slightly when pressed/clicked */
+button:active {
+    transform: translateY(-2px);
+}

@@ -9,7 +9,7 @@ app = Flask(__name__,
             static_folder=basedir,
             static_url_path='')
 app.config['SECRET_KEY'] = 'secret'
-socketio = SocketIO(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 rooms = {}
 
@@ -36,20 +36,60 @@ def generate_code():
 @socketio.on('create_game')
 def handle_create(data):
     room = generate_code()
-    rooms[room] = data
+    rooms[room] = {
+        'meta': data,
+        'players': []
+    }
     join_room(room)
-    print(f"Room Created: {room}")
     emit('game_created', {'room': room})
 
 @socketio.on('join_game')
 def handle_join(data):
     room = data.get('code')
     if room in rooms:
-        join_room(room)
-        print(f"User joined: {room}")
         emit('join_success', {'room': room})
     else:
         emit('error_msg', {'msg': "Invalid Room Code"})
 
+@socketio.on('player_join')
+def handle_player_join(data):
+    room = data.get('room')
+    name = data.get('name')
+    character = data.get('character')
+    
+    if not room or room not in rooms:
+        emit('error_msg', {'msg': 'Invalid Room Code'})
+        return
+
+    join_room(room)
+    
+    player = {'name': name, 'character': character}
+    
+    exists = False
+    for p in rooms[room]['players']:
+        if p['name'] == name:
+            exists = True
+            break
+            
+    if not exists:
+        rooms[room]['players'].append(player)
+    
+    socketio.emit('player_joined', {
+        'player': player, 
+        'players': rooms[room]['players']
+    }, room=room)
+
+@socketio.on('join_waiting_room')
+def handle_join_waiting(data):
+    room = data.get('room')
+    if room in rooms:
+        join_room(room)
+        emit('player_joined', {'players': rooms[room]['players']}, room=room)
+
+@socketio.on('start_game_request')
+def handle_start(data):
+    room = data.get('room')
+    socketio.emit('game_starting', room=room)
+
 if __name__ == '__main__':
-    socketio.run(app, debug=True, host='0.0.0.0')
+    socketio.run(app, host='0.0.0.0', port=5000, debug=True)
