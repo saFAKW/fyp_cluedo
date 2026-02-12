@@ -1,18 +1,21 @@
 // max 10 cards for each hand (incl. cluecards)
-const cards = [
-    "card",
-    "card",
-    "card",
-    "card",
-    "card"
-];
+const cards = []; //filled in by Jed python program
 
 // all items the user looks out for
 const findings = [
-    "Peacock","Plum","Mustard","Scarlett",
-    "Candelabra","Wrench","Rope","Knife","Lead Pipe","Revolver",
-    "Bathroom","Games Room","Dining Room","Kitchen","Master Bedroom","Study"
+    "Kitchen", "Ballroom", "Conservatory", "Dining Room", "Lounge", "Hall", "Study", "Library", "Billiard Room",
+    "Knife", "Revolver", "Rope", "Lead Pipe", "Wrench", "Candlestick",
+    "Miss Scarlet", "Colonel Mustard", "Reverend Green", "Mrs. Peacock", "Professor Plum", "Dr. Orchid"
 ]
+
+// Store all received letters
+let letters = [];
+let currentLetterId = null;
+
+//Generate correct number of players in main taskbar 
+//Generate starting timer (count upwards)
+//Generate dice roll
+
 
 // Generate Findings items (12 items with checkboxes)
 function generateFindings() {
@@ -37,7 +40,7 @@ function generateFindings() {
 // Generate Cards items
 function generateCards() {
     const cardsContent = document.getElementById('cardsContent');
-    cardsContent.innerHTML = '';
+    cardsContent.innerHTML = ''; //use the cardsShuffle.py to socket and collate a hand for a player
 
     for (let i=0; i <= (cards.length-1); i++){
         const cardItem = document.createElement('div');
@@ -60,12 +63,114 @@ function generateLettersSend(type) {
 
 //generate letters recieved (Inbox)
 function generateLettersRecieved() {
-    const letterContent = "" //to be recieved via backend sending
-    //letter must incl. name of sender, recipient, and the the three part information
-    //Works like a button and when clicked reveals a pop up in the center of the screen showing info in a div
-    //Pop up can be closed using a "close button"
-    //Inbox has a "ding" noise when updated with a new letter and new letters have a yellow outline to show they aren't read yet
-    //Keep all letter objects in a retrievable list that doesnt dissapear in the entire game.
+    const inboxContent = document.getElementById('inboxContent');
+    
+    // Clear existing content
+    inboxContent.innerHTML = '';
+    
+    // If no letters, show empty state
+    if (letters.length === 0) {
+        inboxContent.innerHTML = '<div class="empty-state">No messages</div>';
+        return;
+    }
+    
+    // Create letter items for each letter in the list
+    letters.forEach((letter, index) => {
+        const letterItem = document.createElement('div');
+        letterItem.className = 'letter-item';
+        
+        // Add unread class if letter hasn't been read
+        if (!letter.read) {
+            letterItem.className += ' unread';
+        }
+        
+        letterItem.innerHTML = `
+            <div class="letter-header">From: ${letter.sender}</div>
+            <div class="letter-preview">${letter.suspect}, ${letter.weapon}, ${letter.room}</div>
+        `;
+        
+        // Add click handler to open the letter
+        letterItem.onclick = () => openLetter(index);
+        
+        inboxContent.appendChild(letterItem);
+    });
+}
+
+// Open a letter and show the modal
+function openLetter(letterId) {
+    const letter = letters[letterId];
+    currentLetterId = letterId;
+    
+    // Mark letter as read and remove yellow outline
+    if (!letter.read) {
+        letter.read = true;
+        generateLettersRecieved(); // Refresh the inbox to remove yellow outline
+    }
+    
+    // Populate modal content
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+    
+    modalTitle.textContent = `Letter from ${letter.sender}`;
+    
+    modalBody.innerHTML = `
+        <div class="letter-info"><strong>From:</strong> ${letter.sender}</div>
+        <div class="letter-info"><strong>To:</strong> ${letter.recipient}</div>
+        <div class="letter-info"><strong>Suspect:</strong> ${letter.suspect}</div>
+        <div class="letter-info"><strong>Weapon:</strong> ${letter.weapon}</div>
+        <div class="letter-info"><strong>Room:</strong> ${letter.room}</div>
+    `;
+    
+    // Show the modal
+    const modal = document.getElementById('letterModal');
+    modal.classList.add('active');
+}
+
+// Close the letter modal
+function closeLetterModal() {
+    const modal = document.getElementById('letterModal');
+    modal.classList.remove('active');
+    currentLetterId = null;
+}
+
+// Reply to the current letter
+function replyToLetter() {
+    if (currentLetterId !== null) {
+        const letter = letters[currentLetterId];
+        alert(`Replying to ${letter.sender}... (Reply functionality to be implemented)`);
+        // TODO: Implement reply functionality
+        closeLetterModal();
+    }
+}
+
+// Add a new letter to the inbox (with optional "ding" sound)
+function addLetter(sender, recipient, suspect, weapon, room) {
+    const newLetter = {
+        sender: sender,
+        recipient: recipient,
+        suspect: suspect,
+        weapon: weapon,
+        room: room,
+        read: false
+    };
+    
+    letters.push(newLetter);
+    generateLettersRecieved();
+    
+    // Play ding sound (optional - would need audio file)
+    // const ding = new Audio('ding.mp3');
+    // ding.play();
+}
+
+// Create a test letter for demonstration
+function createTestLetter() {
+    addLetter(
+        "Professor Plum",
+        "You",
+        "Miss Scarlet",
+        "Candlestick",
+        "Library"
+    );
 }
 
 // Toggle panel function
@@ -98,3 +203,6 @@ function handleCheckbox(number) {
 // Initialize the panels
 generateFindings();
 generateCards();
+
+// Create a test letter for demonstration
+createTestLetter();
