@@ -41,13 +41,20 @@ def handle_create(data):
         'players': []
     }
     join_room(room)
+    print(f"Room {room} created. Max players: {data['players']}")
     emit('game_created', {'room': room})
 
 @socketio.on('join_game')
 def handle_join(data):
     room = data.get('code')
     if room in rooms:
-        emit('join_success', {'room': room})
+        current_count = len(rooms[room]['players'])
+        max_players = int(rooms[room]['meta']['players'])
+        
+        if current_count >= max_players:
+            emit('error_msg', {'msg': "The room is full."})
+        else:
+            emit('join_success', {'room': room})
     else:
         emit('error_msg', {'msg': "Invalid Room Code"})
 
@@ -62,7 +69,6 @@ def handle_player_join(data):
         return
 
     join_room(room)
-    
     player = {'name': name, 'character': character}
     
     exists = False
@@ -72,7 +78,16 @@ def handle_player_join(data):
             break
             
     if not exists:
+        current_count = len(rooms[room]['players'])
+        max_players = int(rooms[room]['meta']['players'])
+        
+        if current_count >= max_players:
+            emit('error_msg', {'msg': 'The room is full.'})
+            return
+
         rooms[room]['players'].append(player)
+    
+    emit('player_join_confirmed', {'room': room})
     
     socketio.emit('player_joined', {
         'player': player, 
