@@ -1,6 +1,15 @@
-from flask import Flask, render_template_string
+from flask import Flask, render_template_string, request
 from flask_socketio import SocketIO, join_room, emit
-import random, string
+import random, string, os
+
+# Import session manager
+from session_manager import (
+    create_session,
+    get_session,
+    update_session,
+    session_exists,
+    sessions
+)
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'cluedo_pro'
@@ -66,14 +75,65 @@ html = """
     <script>
         const socket = io();
         let user;
-        const $ = id => document.getElementById(id); // 简写函数
+        let sessionId = null;
+        const $ = id => document.getElementById(id);
+
+        // Check for existing session on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            checkSession();
+        });
+
+        function checkSession() {
+            // Try to get session from localStorage
+            const storedSession = localStorage.getItem('session_id');
+            
+            if (storedSession) {
+                // Validate with server
+                socket.emit('validate_session', { session_id: storedSession });
+            } else {
+                // Request new session
+                socket.emit('request_session');
+            }
+        }
+
+        // Handle new session creation
+        socket.on('session_created', function(data) {
+            sessionId = data.session_id;
+            localStorage.setItem('session_id', sessionId);
+            console.log('New session created:', sessionId);
+        });
+
+        // Handle session validation response
+        socket.on('session_valid', function(data) {
+            sessionId = data.session_id;
+            console.log('Session validated:', sessionId);
+        });
+
+        // Handle invalid session
+        socket.on('session_invalid', function() {
+            console.log('Session invalid, requesting new one');
+            localStorage.removeItem('session_id');
+            socket.emit('request_session');
+        });
 
         function act(type) {
             user = $('u').value;
             let code = $('c').value;
+            
             if(!user) return $('err').innerText = "Name is required.";
             if(type == 'join' && !code) return $('err').innerText = "Code is required.";
-            socket.emit(type, {name: user, code: code});
+            
+            if(!sessionId) {
+                $('err').innerText = "Session not ready. Please wait...";
+                return;
+            }
+            
+            // Include session_id in the emit
+            socket.emit(type, {
+                name: user, 
+                code: code,
+                session_id: sessionId
+            });
         }
 
         socket.on('ok', data => {
@@ -95,26 +155,122 @@ html = """
 </html>
 """
 
-def get_code(): return ''.join(random.choices(string.ascii_uppercase, k=4))
+def get_code(): 
+    return ''.join(random.choices(string.ascii_uppercase, k=4))
 
 @app.route('/')
-def index(): return render_template_string(html)
+def index(): 
+    return render_template_string(html)
 
+# request new session
+@socketio.on('request_session')
+def handle_request_session():
+    """Create and send a new session to the client"""
+    session_data = create_session()
+    emit('session_created', {'session_id': session_data['session_id']})
+    print(f"Session requested and created: {session_data['session_id']}")
+
+# validate existing session
+@socketio.on('validate_session')
+def handle_validate_session(data):
+    """Check if a session_id is still valid"""
+    session_id = data.get('session_id')
+    if session_exists(session_id):
+        # Update last activity
+        update_session(session_id, {'connected': True})
+        emit('session_valid', {'session_id': session_id})
+        print(f"Session validated: {session_id}")
+    else:
+        emit('session_invalid', {})
+        print(f"Session invalid: {session_id}")
+
+# create room with session
 @socketio.on('create')
 def c(d):
+    session_id = d.get('session_id')
+    user = d['name']
+    
+    # Validate session exists
+    if not session_exists(session_id):
+        emit('err', 'Invalid session. Please refresh the page.')
+        print(f"Create room failed: Invalid session {session_id}")
+        return
+    
     r = get_code()
-    rooms[r], user = [d['name']], d['name']
-    join_room(r); emit('ok', {'room': r})
-    print(f"Created {r}")
+    rooms[r] = {
+        'host_session': session_id,
+        'players': [{'session_id': session_id, 'name': user}]
+    }
+    
+    # Update session with room info
+    update_session(session_id, {
+        'username': user,
+        'room_code': r,
+        'is_host': True
+    })
+    
+    join_room(r)
+    emit('ok', {'room': r})
+    print(f"Created {r} by session {session_id} (user: {user})")
 
+# Join room with session
 @socketio.on('join')
 def j(d):
-    r, user = d['code'].upper(), d['name']
+    session_id = d.get('session_id')
+    r = d['code'].upper()
+    user = d['name']
+    
+    # Validate session exists
+    if not session_exists(session_id):
+        emit('err', 'Invalid session. Please refresh the page.')
+        print(f"Join room failed: Invalid session {session_id}")
+        return
+    
     if r in rooms:
-        join_room(r); emit('ok', {'room': r})
+        # Check if session already in room
+        existing = [p for p in rooms[r]['players'] if p['session_id'] == session_id]
+        if not existing:
+            rooms[r]['players'].append({'session_id': session_id, 'name': user})
+        
+        # Update session with room info
+        update_session(session_id, {
+            'username': user,
+            'room_code': r,
+            'is_host': False
+        })
+        
+        join_room(r)
+        emit('ok', {'room': r})
         emit('msg', {'u': 'HQ', 'm': f"{user} connected."}, to=r)
-        print(f"Joined {r}")
-    else: emit('err', "Invalid Code")
+        print(f"Joined {r} - session {session_id} (user: {user})")
+        print(f"Room {r} now has {len(rooms[r]['players'])} players")
+    else: 
+        emit('err', "Invalid Code")
+        print(f"Join failed: Room {r} does not exist")
+
+# Handle disconnect
+@socketio.on('disconnect')
+def handle_disconnect():
+    """Mark session as disconnected when user leaves"""
+    print("Client disconnected")
+
+# Debug endpoint to view sessions (remove in production)
+@app.route('/debug/sessions')
+def debug_sessions():
+    """View all active sessions - FOR DEVELOPMENT ONLY"""
+    return {
+        'total_sessions': len(sessions),
+        'sessions': sessions
+    }
+
+# Debug endpoint to view rooms (remove in production)
+@app.route('/debug/rooms')
+def debug_rooms():
+    """View all active rooms - FOR DEVELOPMENT ONLY"""
+    return {
+        'total_rooms': len(rooms),
+        'rooms': rooms
+    }
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)
