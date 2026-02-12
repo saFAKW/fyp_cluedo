@@ -1,14 +1,17 @@
-
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
+html {
+    height: 100%;
+}
+
 body {
     font-family: Arial, sans-serif;
     background: white;
-    min-height: 100vh;
+    height: 100vh;
 }
 
 /* Left Panel - Inbox */
@@ -48,9 +51,10 @@ body {
     text-orientation: mixed;
     font-size: 14px;
     z-index: 999;
+    transition: left 0.3s ease;
 }
 
-.panel-left.active .tab-left {
+.tab-left.active {
     left: 350px;
 }
 
@@ -92,9 +96,10 @@ body {
     text-orientation: mixed;
     font-size: 14px;
     z-index: 999;
+    transition: right 0.3s ease;
 }
 
-.panel-right.active .tab-right {
+.tab-right.active {
     right: 350px;
 }
 
@@ -134,9 +139,10 @@ body {
     justify-content: center;
     font-size: 14px;
     z-index: 999;
+    transition: bottom 0.3s ease;
 }
 
-.panel-bottom.active .tab-bottom {
+.tab-bottom.active {
     bottom: 250px;
 }
 
