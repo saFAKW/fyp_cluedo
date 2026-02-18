@@ -11,6 +11,17 @@ class Player:
         self.gameID = gameID
         self.isTurn = isTurn
         self.inRoom = inRoom
+        self.stillInGame = True
+        self.hasMoved = False
+        self.diceRoll = 0
+
+        def rollDice(self):
+            #Rolls the dice and returns the total
+            import random
+            die1 = random.randint(1, 6)
+            die2 = random.randint(1, 6)
+            self.diceRoll = die1 + die2
+            return self.diceRoll
 
         def checkMovement(self, diceRoll):
             #Checks where the player can move to
@@ -41,3 +52,33 @@ class Player:
                 self.inRoom = False
 
             return self.inRoom
+        
+        def finalGuess(self, guess):
+            #Sends the player's final guess
+            # guess should be a tuple of (weapon, room, suspect)
+            if guess[0] == self.gameID.HiddenWeapon and guess[1] == self.gameID.HiddenRoom and guess[2] == self.gameID.HiddenSuspect:
+                return True 
+            else:               
+                self.stillInGame = False 
+                return False
+            
+        def startTurn(self):
+            self.isTurn = True
+            # tell the game to allow the player to take their turn
+            self.hasMoved = False
+
+        def endTurn(self):
+            self.isTurn = False
+            # tell the game to move to the next player's turn
+
+        def move(self, newLocation, diceRoll):
+            possibleMoves = self.checkMovement(diceRoll)
+            if newLocation in possibleMoves:
+                self.location = newLocation
+                self.hasMoved = True
+            else:
+                print("Invalid move. Please choose a valid location within your dice roll range.")
+
+        def timeOut(self, turnTimeLimit):
+            # If the player takes too long to make a move, this function can be called to end their turn
+            self.endTurn()
