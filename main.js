@@ -16,7 +16,6 @@ let currentLetterId = null;
 //Generate starting timer (count upwards)
 //Generate dice roll
 
-
 // Generate Findings items (12 items with checkboxes)
 function generateFindings() {
     const findingsContent = document.getElementById('findingsContent');
@@ -59,6 +58,7 @@ function generateLettersSend(type) {
     //letters in inbox when clicked ask player "view or reply" they pick accordingly
     //if view a letter, JUMP TO generateLettersRecieved()
     //to send, you click a room instead
+    pass
 }
 
 //generate letters recieved (Inbox)
@@ -137,8 +137,8 @@ function closeLetterModal() {
 function replyToLetter() {
     if (currentLetterId !== null) {
         const letter = letters[currentLetterId];
-        alert(`Replying to ${letter.sender}... (Reply functionality to be implemented)`);
-        // TODO: Implement reply functionality
+        alert(`Replying to ${letter.sender}... (Reply code not ready yet)`);
+        //Implement reply functionality
         closeLetterModal();
     }
 }
@@ -156,8 +156,7 @@ function addLetter(sender, recipient, suspect, weapon, room) {
     
     letters.push(newLetter);
     generateLettersRecieved();
-    
-    // Play ding sound (optional - would need audio file)
+
     // const ding = new Audio('ding.mp3');
     // ding.play();
 }
