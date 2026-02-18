@@ -1,3 +1,5 @@
+import time
+
 #Needs to change based on how the board stores rooms
 roomLocations = ["Kitchen", "Ballroom", "Conservatory", "Dining Room", "Billiard Room", "Library", "Lounge", "Hall", "Study"]
 
@@ -41,3 +43,16 @@ class Player:
                 self.inRoom = False
 
             return self.inRoom
+        
+        def startTurn(self):
+            self.isTurn = True
+            startTime = time.perf_counter()
+            while self.isTurn:
+                currentTime = time.perf_counter()
+                if currentTime - startTime < 60:
+                    isTurn = False
+                    #make it the next players turn
+                # allow moving
+                if self.isInRoom:
+                    # allow sending accusations
+                    pass
