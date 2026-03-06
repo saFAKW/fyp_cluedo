@@ -12,9 +12,10 @@
         <aside class="left">
             <div class="left-inner">
                 <h1>Who Dunnit?</h1>
+                <span class="title-ornament">✦ ✦ ✦</span>
                 <div class="initial">
                     <button class="btn primary" onclick="location.href='/host'">Host Game</button>
-                    <button class="btn" onclick="location.href='/join'">Join Game</button>
+                    <button class="btn join" onclick="location.href='/join'">Join Game</button>
                     <button class="btn" onclick="location.href='/handbook'">Handbook</button>
                 </div>
             </div>
@@ -26,23 +27,23 @@
                 <div class="slideshow-container">
                     <div class="slideshow-track">
                         <div class="mySlides">
-                            < img src="assets/Mustard.png" alt="char" class="slide-img" id="img1">
+                            <img src="assets/Mustard.png" alt="char" class="slide-img" id="img1">
                             <div class="text"><span id="name">Name</span> has been the murderer <span id="count1">x</span> times today</div>
                         </div>
 
                         <div class="mySlides">
-                            < img src="assets/pistol.png" alt="weap" class="slide-img" id="img2">
+                            <img src="assets/pistol.png" alt="weap" class="slide-img" id="img2">
                             <div class="text"><span id="weapon-text">Weapon</span> has been the murder weapon for <span id="count2">y</span> games</div>
                         </div>
 
                         <div class="mySlides">
-                            < img src="assets/Door.png" alt="door" class="slide-img" id="img3">
+                            <img src="assets/Door.png" alt="door" class="slide-img" id="img3">
                             <div class="text">Dr. White has been killed in the <span id="room">Room</span> <span id="count3">z</span> times</div>
                         </div>
                     </div>
 
-                    <a class="prev" onclick="plusSlides(-1)">&#10094;</a >
-                    <a class="next" onclick="plusSlides(1)">&#10095;</a >
+                    <a class="prev" onclick="plusSlides(-1)">&#10094;</a>
+                    <a class="next" onclick="plusSlides(1)">&#10095;</a>
                 </div>
                 <div class="dots-wrap" aria-hidden="true">
                     <span class="dot" onclick="currentSlide(1)"></span>
@@ -54,7 +55,7 @@
             <section class="leaderboard">
                 <h2>Leaderboard</h2>
                 <div class="leaderboard-content">
-                    <p>Top players will show here...</p >
+                    <p>Top players will show here...</p>
                 </div>
             </section>
         </main>
