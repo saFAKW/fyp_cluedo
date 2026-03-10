@@ -1,5 +1,10 @@
 const SERVER_URL = window.location.origin;
 let socket = io(SERVER_URL);
+let sessionId = localStorage.getItem('session_id');
+
+if (sessionId) {
+    socket.emit('validate_session', { session_id: sessionId });
+}
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -7,15 +12,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const room = params.get('room');
     const role = params.get('role');
 
-
     const roomDisplay = document.getElementById('roomCodeDisplay');
     if (roomDisplay) {
         roomDisplay.textContent = room;
     }
 
-
     socket.emit('join_waiting_room', { room: room });
-
 
     socket.on('player_joined', (data) => {
         const list = document.getElementById('playerList');
@@ -34,17 +36,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-
     const startBtn = document.getElementById('startGameBtn');
     if (startBtn && role === 'host') {
         startBtn.style.display = 'inline-block';
         startBtn.addEventListener('click', () => {
-            socket.emit('start_game_request', { room: room });
+            socket.emit('start_game_request', { room: room, session_id: sessionId });
         });
     }
 
-
     socket.on('game_starting', () => {
-        window.location.href = `game?room=${room}`;
+        window.location.href = `/game?room=${room}`;
+    });
+    
+    socket.on('error_msg', function(data) {
+        alert(data.msg);
     });
 });
