@@ -1,9 +1,7 @@
-
 const SERVER_URL = window.location.origin;
 let socket = io(SERVER_URL);
 let sessionId = null;
 
-// Check for existing session on page load
 window.addEventListener('DOMContentLoaded', function () {
     checkSession();
 });
@@ -18,27 +16,20 @@ function checkSession() {
     }
 }
 
-// Handle new session creation
 socket.on('session_created', function (data) {
     sessionId = data.session_id;
     localStorage.setItem('session_id', sessionId);
-    console.log('New session created:', sessionId);
 });
 
-// Handle session validation response
 socket.on('session_valid', function (data) {
     sessionId = data.session_id;
-    console.log('Session validated:', sessionId);
 });
 
-// Handle invalid session
 socket.on('session_invalid', function () {
-    console.log('Session invalid, requesting new one');
     localStorage.removeItem('session_id');
     socket.emit('request_session');
 });
 
-// All DOM manipulation code inside DOMContentLoaded
 document.addEventListener('DOMContentLoaded', () => {
     const inputs = document.querySelectorAll('.code-box');
 
@@ -66,15 +57,13 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (code.length < 6) {
-                alert("Please enter the full 6-digit code.");
+                alert("Please enter the full 6-character code.");
                 return;
             }
 
-            // If no session yet, wait and retry
             if (!sessionId) {
                 alert("Initializing session... please try again in 1 second.");
 
-                // Wait for session
                 setTimeout(() => {
                     if (sessionId) {
                         joinGame(code);
@@ -89,10 +78,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    socket.on('join_success', function (data) {
-        window.location.href = "/game?room=" + data.room;
-    });
-
     socket.on('error_msg', function (data) {
         alert(data.msg);
         inputs.forEach(input => input.value = '');
@@ -101,8 +86,29 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function joinGame(code) {
-    socket.emit('join_game', {
-        code: code,
-        session_id: sessionId
+    fetch('/api/games/join', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            code: code,
+            sessionId: sessionId,
+            displayName: "" 
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert(data.error);
+            const inputs = document.querySelectorAll('.code-box');
+            inputs.forEach(input => input.value = '');
+            inputs[0].focus();
+        } else if (data.success) {
+            window.location.href = "/wait?room=" + data.room + "&role=player";
+        }
+    })
+    .catch(error => {
+        alert("Connection error.");
     });
 }
