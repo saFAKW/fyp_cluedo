@@ -1,4 +1,4 @@
-const SERVER_URL = 'http://127.0.0.1:5000';
+const SERVER_URL = window.location.origin;
 let socket;
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -35,10 +35,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     nameToShow = file.replace(/\.[^.]+$/, '');
                 }
                 selectedName = nameToShow;
-                
-                if (greeting) { 
-                    greeting.textContent = `Hello, ${selectedName}`; 
-                    greeting.style.display = 'block'; 
+
+                if (greeting) {
+                    greeting.textContent = `Hello, ${selectedName}`;
+                    greeting.style.display = 'block';
                 }
                 if (input) {
                     input.style.display = 'block';
@@ -49,13 +49,13 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 selectedColor = null;
                 selectedName = null;
-                if (greeting) { 
-                    greeting.textContent = ''; 
-                    greeting.style.display = 'none'; 
+                if (greeting) {
+                    greeting.textContent = '';
+                    greeting.style.display = 'none';
                 }
-                if (input) { 
-                    input.style.display = 'none'; 
-                    input.value = ''; 
+                if (input) {
+                    input.style.display = 'none';
+                    input.value = '';
                 }
                 if (joinBtn) {
                     joinBtn.style.display = 'none';
@@ -79,12 +79,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('Please pick a character.');
             } else {
                 const displayName = selectedName || selectedColor || 'Unknown';
-                
+
                 if (socket) {
-                    socket.emit('player_join', { 
-                        room: room, 
-                        name: name, 
-                        character: displayName 
+                    socket.emit('player_join', {
+                        room: room,
+                        name: name,
+                        character: displayName
                     });
                 }
 
