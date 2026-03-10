@@ -37,12 +37,23 @@ class Player:
             return possibleMoves
 
         def sendAccusation(self, accusation):
-            #Sends the player's accusation
-            pass
+            if self.isInRoom():
+                if accusation[1] != self.location:
+                    print("Your accusation must be for the room you are currently in.")
+                    return None
+                
+                return accusation
+            else:
+                print("You must be in a room to make an accusation.")
+                return None
 
         def receiveAccusation(self, accusation):
-            #Receives an accusation from another player
-            pass
+            possibleCards = []
+            for card in accusation:
+                if card in self.hand:
+                    possibleCards.append(card)
+
+            return possibleCards
 
         def isInRoom(self):
             #Checks if the player is in a room
