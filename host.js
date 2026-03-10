@@ -1,4 +1,4 @@
-const SERVER_URL = 'http://127.0.0.1:5000';
+const SERVER_URL = window.location.origin;
 let socket = io(SERVER_URL);
 let sessionId = null;
 
@@ -8,14 +8,11 @@ window.addEventListener('DOMContentLoaded', function () {
 });
 
 function checkSession() {
-    // Try to get session from localStorage
     const storedSession = localStorage.getItem('session_id');
 
     if (storedSession) {
-        // Validate with server
         socket.emit('validate_session', { session_id: storedSession });
     } else {
-        // Request new session
         socket.emit('request_session');
     }
 }
@@ -40,17 +37,18 @@ socket.on('session_invalid', function () {
     socket.emit('request_session');
 });
 
-// include session_id in create_game
+// Connection handlers
+socket.on('connect', () => {
+    console.log('Connected to server');
+});
+
+socket.on('connect_error', (error) => {
+    const errorBox = document.getElementById("errorBox");
+    if (errorBox) errorBox.textContent = "Cannot connect to server.";
+});
+
+// Make Game button handler
 document.addEventListener('DOMContentLoaded', () => {
-    socket.on('connect', () => {
-        console.log('Connected to server');
-    });
-
-    socket.on('connect_error', (error) => {
-        const errorBox = document.getElementById("errorBox");
-        if (errorBox) errorBox.textContent = "Cannot connect to server.";
-    });
-
     const makeGameBtn = document.getElementById("makeGameBtn");
     if (makeGameBtn) {
         makeGameBtn.addEventListener("click", function () {
@@ -63,22 +61,39 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            // If no session yet, wait a moment and retry
             if (!sessionId) {
-                errorBox.textContent = "Session not ready. Please wait...";
+                errorBox.textContent = "Initializing... please wait";
+                errorBox.style.color = "orange";
+
+                // Wait 500ms for session to arrive, then retry
+                setTimeout(() => {
+                    if (sessionId) {
+                        // Session arrived, proceed
+                        createGame(players, clues, errorBox);
+                    } else {
+                        errorBox.textContent = "Session error. Please refresh the page.";
+                        errorBox.style.color = "red";
+                    }
+                }, 500);
                 return;
             }
 
-            socket.emit('create_game', {
-                players: players,
-                clues: clues,
-                session_id: sessionId  // Include session
-            });
-            errorBox.textContent = "Creating game...";
-            errorBox.style.color = "blue";
+            createGame(players, clues, errorBox);
         });
-    }  // ← THIS CLOSING BRACE WAS MISSING!
+    }
+});
 
-    socket.on('game_created', function (data) {
-        window.location.href = "/game?room=" + data.room;
+function createGame(players, clues, errorBox) {
+    socket.emit('create_game', {
+        players: players,
+        clues: clues,
+        session_id: sessionId
     });
-}); 
+    errorBox.textContent = "Creating game...";
+    errorBox.style.color = "blue";
+}
+
+socket.on('game_created', function (data) {
+    window.location.href = "/game?room=" + data.room;
+});

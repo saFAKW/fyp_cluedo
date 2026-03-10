@@ -1,5 +1,5 @@
 // Session management
-const socket = io();
+const socket = io(window.location.origin);
 let sessionId = null;
 
 // Check for existing session on page load

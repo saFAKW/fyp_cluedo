@@ -1,11 +1,11 @@
 import uuid
 from datetime import datetime
 
-# dictionary to store all sessions
+# Global dictionary to store all sessions
 sessions = {}
 
 def generate_session_id():
-    """generate a unique session ID using UUID"""
+    """Generate a unique session ID using UUID"""
     return str(uuid.uuid4())
 
 def create_session():
@@ -25,7 +25,7 @@ def create_session():
     return session_data
 
 def get_session(session_id):
-    """retrieve session data by session_id"""
+    """Retrieve session data by session_id"""
     return sessions.get(session_id)
 
 def update_session(session_id, updates):
@@ -37,7 +37,7 @@ def update_session(session_id, updates):
     return None
 
 def delete_session(session_id):
-    """remove a session from storage"""
+    """Remove a session from storage"""
     if session_id in sessions:
         del sessions[session_id]
         print(f"Session deleted: {session_id}")
@@ -45,5 +45,21 @@ def delete_session(session_id):
     return False
 
 def session_exists(session_id):
-    """check if a session exists and is valid"""
+    """Check if a session exists and is valid"""
     return session_id in sessions
+
+def get_sessions_in_room(room_code):
+    """Get all sessions that are in a specific room"""
+    return [session for session in sessions.values() if session.get('room_code') == room_code]
+
+def is_username_taken_in_room(username, room_code, exclude_session_id=None):
+    """
+    Check if a username is already taken in a specific room
+    exclude_session_id: used when checking for reconnection (same user, same session)
+    """
+    room_sessions = get_sessions_in_room(room_code)
+    for session in room_sessions:
+        if session['session_id'] != exclude_session_id:
+            if session.get('username') and session['username'].lower() == username.lower():
+                return True
+    return False

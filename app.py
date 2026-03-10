@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, request
+from flask import Flask, render_template, request
 from flask_socketio import SocketIO, join_room, emit
 import random, string, os
 
@@ -8,7 +8,9 @@ from session_manager import (
     get_session,
     update_session,
     session_exists,
-    sessions
+    sessions,
+    is_username_taken_in_room,
+    get_sessions_in_room
 )
 
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -39,23 +41,136 @@ def game_page():
     room_code = request.args.get('room')
     return render_template('main.html', room_code=room_code)
 
+# PROTOTYPE ROUTE - Keep your prototype separate
+@app.route('/prototype')
+def prototype_index(): 
+    return render_template_string(html)
+
 def generate_code():
     return ''.join(random.choices(string.digits, k=6))
 
+def get_code(): 
+    return ''.join(random.choices(string.ascii_uppercase, k=4))
+
+# SESSION MANAGEMENT HANDLERS
+
+@socketio.on('request_session')
+def handle_request_session():
+    """Create and send a new session to the client"""
+    session_data = create_session()
+    emit('session_created', {'session_id': session_data['session_id']})
+    print(f"Session requested and created: {session_data['session_id']}")
+
+@socketio.on('validate_session')
+def handle_validate_session(data):
+    """Check if a session_id is still valid"""
+    session_id = data.get('session_id')
+    if session_exists(session_id):
+        session = get_session(session_id)
+        # Update last activity
+        update_session(session_id, {'connected': True})
+        
+        # Check if session has an active room
+        should_reconnect = session.get('room_code') is not None
+        room_code = session.get('room_code')
+        
+        # Verify room still exists
+        if should_reconnect and room_code not in rooms:
+            should_reconnect = False
+            update_session(session_id, {'room_code': None, 'is_host': False})
+        
+        emit('session_valid', {
+            'session_id': session_id,
+            'should_reconnect': should_reconnect,
+            'room_code': room_code
+        })
+        print(f"Session validated: {session_id} (reconnect: {should_reconnect})")
+    else:
+        emit('session_invalid', {})
+        print(f"Session invalid: {session_id}")
+
+@socketio.on('reconnect_to_game')
+def handle_reconnect(data):
+    """Reconnect a player to their active game"""
+    session_id = data.get('session_id')
+    
+    if not session_exists(session_id):
+        emit('err', 'Invalid session')
+        return
+    
+    session = get_session(session_id)
+    room_code = session.get('room_code')
+    username = session.get('username')
+    
+    # Verify room exists
+    if not room_code or room_code not in rooms:
+        emit('err', 'Game no longer exists')
+        update_session(session_id, {'room_code': None, 'is_host': False})
+        return
+    
+    # Rejoin the socket room
+    join_room(room_code)
+    
+    # Get message history (if you're storing it)
+    message_history = rooms[room_code].get('message_history', [])
+    
+    # Notify others in the room
+    emit('msg', {'u': 'HQ', 'm': f"{username} reconnected."}, to=room_code, include_self=False)
+    
+    # Send reconnection success with game state
+    emit('reconnected', {
+        'room': room_code,
+        'username': username,
+        'is_host': session.get('is_host', False),
+        'message_history': message_history
+    })
+    
+    print(f"Session {session_id} ({username}) reconnected to room {room_code}")
+
+# GAME HANDLERS
+
 @socketio.on('create_game')
 def handle_create(data):
+    session_id = data.get('session_id')
+    
+    # Validate session exists
+    if not session_exists(session_id):
+        emit('error_msg', {'msg': 'Invalid session. Please refresh the page.'})
+        print(f"Create game failed: Invalid session {session_id}")
+        return
+    
     room = generate_code()
     rooms[room] = {
-        'meta': data,
-        'players': []
+        'meta': {
+            'players': data.get('players'),
+            'clues': data.get('clues')
+        },
+        'host_session': session_id,
+        'players': [],
+        'message_history': []
     }
+    
+    # Update session with room info
+    update_session(session_id, {
+        'room_code': room,
+        'is_host': True
+    })
+    
     join_room(room)
-    print(f"Room {room} created. Max players: {data['players']}")
+    print(f"Room {room} created by session {session_id}. Max players: {data.get('players')}")
     emit('game_created', {'room': room})
 
 @socketio.on('join_game')
 def handle_join(data):
+    session_id = data.get('session_id')
     room = data.get('code')
+    
+    # Validate session exists
+    if not session_exists(session_id):
+        emit('error_msg', {'msg': 'Invalid session. Please refresh the page.'})
+        print(f"Join game failed: Invalid session {session_id}")
+        return
+    
     if room in rooms:
         current_count = len(rooms[room]['players'])
         max_players = int(rooms[room]['meta']['players'])
@@ -63,6 +178,11 @@ def handle_join(data):
         if current_count >= max_players:
             emit('error_msg', {'msg': "The room is full."})
         else:
+            # Update session with room info
+            update_session(session_id, {
+                'room_code': room,
+                'is_host': False
+            })
             emit('join_success', {'room': room})
     else:
         emit('error_msg', {'msg': "Invalid Room Code"})
@@ -72,18 +192,28 @@ def handle_player_join(data):
     room = data.get('room')
     name = data.get('name')
     character = data.get('character')
+    session_id = data.get('session_id')
     
     if not room or room not in rooms:
         emit('error_msg', {'msg': 'Invalid Room Code'})
         return
+    
+    # Validate username uniqueness
+    if is_username_taken_in_room(name, room, exclude_session_id=session_id):
+        emit('error_msg', {'msg': f"Name '{name}' is already taken in this room."})
+        print(f"Player join failed: Username '{name}' already taken in room {room}")
+        return
 
     join_room(room)
-    player = {'name': name, 'character': character}
+    player = {'name': name, 'character': character, 'session_id': session_id}
     
     exists = False
     for p in rooms[room]['players']:
-        if p['name'] == name:
+        if p.get('session_id') == session_id:
             exists = True
+            # Update player info if reconnecting
+            p['name'] = name
+            p['character'] = character
             break
             
     if not exists:
@@ -96,12 +226,140 @@ def handle_player_join(data):
 
         rooms[room]['players'].append(player)
     
+    # Update session
+    update_session(session_id, {
+        'username': name,
+        'room_code': room
+    })
+    
     emit('player_join_confirmed', {'room': room})
     
     socketio.emit('player_joined', {
         'player': player, 
         'players': rooms[room]['players']
     }, room=room)
+    
+    print(f"Player {name} joined room {room}")
+
+@socketio.on('join_waiting_room')
+def handle_join_waiting(data):
+    room = data.get('room')
+    if room in rooms:
+        join_room(room)
+        emit('player_joined', {'players': rooms[room]['players']}, room=room)
+
+@socketio.on('start_game_request')
+def handle_start(data):
+    room = data.get('room')
+    socketio.emit('game_starting', room=room)
+
+# PROTOTYPE HANDLERS (for /prototype route)
+
+@socketio.on('create')
+def c(d):
+    session_id = d.get('session_id')
+    user = d['name']
+    
+    # Validate session exists
+    if not session_exists(session_id):
+        emit('err', 'Invalid session. Please refresh the page.')
+        print(f"Create room failed: Invalid session {session_id}")
+        return
+    
+    r = get_code()
+    rooms[r] = {
+        'host_session': session_id,
+        'players': [{'session_id': session_id, 'name': user}],
+        'message_history': []
+    }
+    
+    # Update session with room info
+    update_session(session_id, {
+        'username': user,
+        'room_code': r,
+        'is_host': True
+    })
+    
+    join_room(r)
+    emit('ok', {'room': r})
+    print(f"Created {r} by session {session_id} (user: {user})")
+
+@socketio.on('join')
+def j(d):
+    session_id = d.get('session_id')
+    r = d['code'].upper()
+    user = d['name']
+    
+    # Validate session exists
+    if not session_exists(session_id):
+        emit('err', 'Invalid session. Please refresh the page.')
+        print(f"Join room failed: Invalid session {session_id}")
+        return
+    
+    # Check if room exists
+    if r not in rooms:
+        emit('err', "Invalid Code")
+        print(f"Join failed: Room {r} does not exist")
+        return
+    
+    # Check if username is already taken in this room
+    if is_username_taken_in_room(user, r, exclude_session_id=session_id):
+        emit('err', f"Name '{user}' is already taken in this room. Please choose another.")
+        print(f"Join failed: Username '{user}' already taken in room {r}")
+        return
+    
+    # Check if session already in room (reconnection case)
+    existing = [p for p in rooms[r]['players'] if p['session_id'] == session_id]
+    if not existing:
+        rooms[r]['players'].append({'session_id': session_id, 'name': user})
+    else:
+        # Update name in case it changed
+        existing[0]['name'] = user
+    
+    # Update session with room info
+    update_session(session_id, {
+        'username': user,
+        'room_code': r,
+        'is_host': False
+    })
+    
+    join_room(r)
+    emit('ok', {'room': r})
+    
+    # Store and broadcast join message
+    join_msg = {'u': 'HQ', 'm': f"{user} connected."}
+    rooms[r]['message_history'].append(join_msg)
+    emit('msg', join_msg, to=r)
+    
+    print(f"Joined {r} - session {session_id} (user: {user})")
+    print(f"Room {r} now has {len(rooms[r]['players'])} players")
+
+# DISCONNECT HANDLER
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    """Mark session as disconnected when user leaves"""
+    print("Client disconnected")
+
+# DEBUG ENDPOINTS (REMOVE IN PRODUCTION)
+
+@app.route('/debug/sessions')
+def debug_sessions():
+    """View all active sessions - FOR DEVELOPMENT ONLY"""
+    return {
+        'total_sessions': len(sessions),
+        'sessions': sessions
+    }
+
+@app.route('/debug/rooms')
+def debug_rooms():
+    """View all active rooms - FOR DEVELOPMENT ONLY"""
+    return {
+        'total_rooms': len(rooms),
+        'rooms': rooms
+    }
+
+# HTML for prototype route
 html = """
 <!DOCTYPE html>
 <html lang="en">
@@ -162,6 +420,7 @@ html = """
         const socket = io();
         let user;
         let sessionId = null;
+        let currentRoom = null;
         const $ = id => document.getElementById(id);
 
         // Check for existing session on page load
@@ -193,6 +452,12 @@ html = """
         socket.on('session_valid', function(data) {
             sessionId = data.session_id;
             console.log('Session validated:', sessionId);
+            
+            // Check if we should reconnect to a game
+            if (data.should_reconnect && data.room_code) {
+                console.log('Reconnecting to room:', data.room_code);
+                socket.emit('reconnect_to_game', { session_id: sessionId });
+            }
         });
 
         // Handle invalid session
@@ -200,6 +465,29 @@ html = """
             console.log('Session invalid, requesting new one');
             localStorage.removeItem('session_id');
             socket.emit('request_session');
+        });
+
+        // Handle reconnection success
+        socket.on('reconnected', function(data) {
+            currentRoom = data.room;
+            user = data.username;
+            
+            $('login').classList.add('hide');
+            $('game').classList.remove('hide');
+            $('rcode').innerText = data.room;
+            $('me').innerText = user;
+            
+            // Restore message history if provided
+            if (data.message_history && data.message_history.length > 0) {
+                let b = $('msgs');
+                b.innerHTML = '<div><i>Reconnected to investigation...</i></div>';
+                data.message_history.forEach(msg => {
+                    b.innerHTML += `<div><b style="color:#d4af37">${msg.u}</b>: ${msg.m}</div>`;
+                });
+                b.scrollTop = b.scrollHeight;
+            }
+            
+            console.log('Successfully reconnected to game');
         });
 
         function act(type) {
@@ -223,6 +511,7 @@ html = """
         }
 
         socket.on('ok', data => {
+            currentRoom = data.room;
             $('login').classList.add('hide');
             $('game').classList.remove('hide');
             $('rcode').innerText = data.room;
@@ -241,133 +530,5 @@ html = """
 </html>
 """
 
-def get_code(): 
-    return ''.join(random.choices(string.ascii_uppercase, k=4))
-
-@app.route('/')
-def index(): 
-    return render_template_string(html)
-
-# request new session
-@socketio.on('request_session')
-def handle_request_session():
-    """Create and send a new session to the client"""
-    session_data = create_session()
-    emit('session_created', {'session_id': session_data['session_id']})
-    print(f"Session requested and created: {session_data['session_id']}")
-
-# validate existing session
-@socketio.on('validate_session')
-def handle_validate_session(data):
-    """Check if a session_id is still valid"""
-    session_id = data.get('session_id')
-    if session_exists(session_id):
-        # Update last activity
-        update_session(session_id, {'connected': True})
-        emit('session_valid', {'session_id': session_id})
-        print(f"Session validated: {session_id}")
-    else:
-        emit('session_invalid', {})
-        print(f"Session invalid: {session_id}")
-
-# create room with session
-@socketio.on('create')
-def c(d):
-    session_id = d.get('session_id')
-    user = d['name']
-    
-    # Validate session exists
-    if not session_exists(session_id):
-        emit('err', 'Invalid session. Please refresh the page.')
-        print(f"Create room failed: Invalid session {session_id}")
-        return
-    
-    r = get_code()
-    rooms[r] = {
-        'host_session': session_id,
-        'players': [{'session_id': session_id, 'name': user}]
-    }
-    
-    # Update session with room info
-    update_session(session_id, {
-        'username': user,
-        'room_code': r,
-        'is_host': True
-    })
-    
-    join_room(r)
-    emit('ok', {'room': r})
-    print(f"Created {r} by session {session_id} (user: {user})")
-
-# Join room with session
-@socketio.on('join')
-def j(d):
-    session_id = d.get('session_id')
-    r = d['code'].upper()
-    user = d['name']
-    
-    # Validate session exists
-    if not session_exists(session_id):
-        emit('err', 'Invalid session. Please refresh the page.')
-        print(f"Join room failed: Invalid session {session_id}")
-        return
-    
-    if r in rooms:
-        # Check if session already in room
-        existing = [p for p in rooms[r]['players'] if p['session_id'] == session_id]
-        if not existing:
-            rooms[r]['players'].append({'session_id': session_id, 'name': user})
-        
-        # Update session with room info
-        update_session(session_id, {
-            'username': user,
-            'room_code': r,
-            'is_host': False
-        })
-        
-        join_room(r)
-        emit('ok', {'room': r})
-        emit('msg', {'u': 'HQ', 'm': f"{user} connected."}, to=r)
-        print(f"Joined {r} - session {session_id} (user: {user})")
-        print(f"Room {r} now has {len(rooms[r]['players'])} players")
-    else: 
-        emit('err', "Invalid Code")
-        print(f"Join failed: Room {r} does not exist")
-
-# Handle disconnect
-@socketio.on('disconnect')
-def handle_disconnect():
-    """Mark session as disconnected when user leaves"""
-    print("Client disconnected")
-
-# Debug endpoint to view sessions (remove in production)
-@app.route('/debug/sessions')
-def debug_sessions():
-    """View all active sessions - FOR DEVELOPMENT ONLY"""
-    return {
-        'total_sessions': len(sessions),
-        'sessions': sessions
-    }
-
-# Debug endpoint to view rooms (remove in production)
-@app.route('/debug/rooms')
-def debug_rooms():
-    """View all active rooms - FOR DEVELOPMENT ONLY"""
-    return {
-        'total_rooms': len(rooms),
-        'rooms': rooms
-    }
-@socketio.on('join_waiting_room')
-def handle_join_waiting(data):
-    room = data.get('room')
-    if room in rooms:
-        join_room(room)
-        emit('player_joined', {'players': rooms[room]['players']}, room=room)
-
-@socketio.on('start_game_request')
-def handle_start(data):
-    room = data.get('room')
-    socketio.emit('game_starting', room=room)
-
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=5000, debug=True)
+    socketio.run(app, host='0.0.0.0', port=5001, debug=True)

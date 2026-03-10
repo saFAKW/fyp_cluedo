@@ -1,4 +1,5 @@
-const SERVER_URL = 'http://127.0.0.1:5000';
+
+const SERVER_URL = window.location.origin;
 let socket = io(SERVER_URL);
 let sessionId = null;
 
@@ -8,14 +9,11 @@ window.addEventListener('DOMContentLoaded', function () {
 });
 
 function checkSession() {
-    // Try to get session from localStorage
     const storedSession = localStorage.getItem('session_id');
 
     if (storedSession) {
-        // Validate with server
         socket.emit('validate_session', { session_id: storedSession });
     } else {
-        // Request new session
         socket.emit('request_session');
     }
 }
@@ -40,7 +38,7 @@ socket.on('session_invalid', function () {
     socket.emit('request_session');
 });
 
-
+// All DOM manipulation code inside DOMContentLoaded
 document.addEventListener('DOMContentLoaded', () => {
     const inputs = document.querySelectorAll('.code-box');
 
@@ -72,15 +70,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            // If no session yet, wait and retry
             if (!sessionId) {
-                alert("Session not ready. Please wait and try again.");
+                alert("Initializing session... please try again in 1 second.");
+
+                // Wait for session
+                setTimeout(() => {
+                    if (sessionId) {
+                        joinGame(code);
+                    } else {
+                        alert("Session error. Please refresh the page.");
+                    }
+                }, 1000);
                 return;
             }
 
-            socket.emit('join_game', {
-                code: code,
-                session_id: sessionId
-            });
+            joinGame(code);
         });
     }
 
@@ -93,4 +98,11 @@ document.addEventListener('DOMContentLoaded', () => {
         inputs.forEach(input => input.value = '');
         inputs[0].focus();
     });
-}); 
+});
+
+function joinGame(code) {
+    socket.emit('join_game', {
+        code: code,
+        session_id: sessionId
+    });
+}
