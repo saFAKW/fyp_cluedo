@@ -1,4 +1,5 @@
-const socket = io();
+const SERVER_URL = 'http://127.0.0.1:5000';
+let socket = io(SERVER_URL);
 let sessionId = null;
 
 // Check for existing session on page load
@@ -40,30 +41,44 @@ socket.on('session_invalid', function () {
 });
 
 // include session_id in create_game
-document.getElementById("makeGameBtn").addEventListener("click", function () {
-    const players = document.getElementById("playersSelect").value;
-    const clues = document.getElementById("clueSelect").value;
-    const errorBox = document.getElementById("errorBox");
-
-    if (!players || !clues) {
-        errorBox.textContent = "Please select both options.";
-        return;
-    }
-
-    if (!sessionId) {
-        errorBox.textContent = "Session not ready. Please wait...";
-        return;
-    }
-
-    socket.emit('create_game', {
-        players: players,
-        clues: clues,
-        session_id: sessionId  // Include session
+document.addEventListener('DOMContentLoaded', () => {
+    socket.on('connect', () => {
+        console.log('Connected to server');
     });
-    errorBox.textContent = "Creating game...";
-    errorBox.style.color = "blue";
-});
 
-socket.on('game_created', function (data) {
-    window.location.href = "/game?room=" + data.room;
-});
+    socket.on('connect_error', (error) => {
+        const errorBox = document.getElementById("errorBox");
+        if (errorBox) errorBox.textContent = "Cannot connect to server.";
+    });
+
+    const makeGameBtn = document.getElementById("makeGameBtn");
+    if (makeGameBtn) {
+        makeGameBtn.addEventListener("click", function () {
+            const players = document.getElementById("playersSelect").value;
+            const clues = document.getElementById("clueSelect").value;
+            const errorBox = document.getElementById("errorBox");
+
+            if (!players || !clues) {
+                errorBox.textContent = "Please select both options.";
+                return;
+            }
+
+            if (!sessionId) {
+                errorBox.textContent = "Session not ready. Please wait...";
+                return;
+            }
+
+            socket.emit('create_game', {
+                players: players,
+                clues: clues,
+                session_id: sessionId  // Include session
+            });
+            errorBox.textContent = "Creating game...";
+            errorBox.style.color = "blue";
+        });
+    }  // ← THIS CLOSING BRACE WAS MISSING!
+
+    socket.on('game_created', function (data) {
+        window.location.href = "/game?room=" + data.room;
+    });
+}); 

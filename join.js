@@ -1,5 +1,5 @@
-const socket = io();
-const inputs = document.querySelectorAll('.code-box');
+const SERVER_URL = 'http://127.0.0.1:5000';
+let socket = io(SERVER_URL);
 let sessionId = null;
 
 // Check for existing session on page load
@@ -40,49 +40,57 @@ socket.on('session_invalid', function () {
     socket.emit('request_session');
 });
 
-inputs.forEach((input, index) => {
-    input.addEventListener('input', (e) => {
-        if (input.value.length === 1 && index < inputs.length - 1) {
-            inputs[index + 1].focus();
-        }
+
+document.addEventListener('DOMContentLoaded', () => {
+    const inputs = document.querySelectorAll('.code-box');
+
+    inputs.forEach((input, index) => {
+        input.addEventListener('input', () => {
+            if (input.value.length === 1 && index < inputs.length - 1) {
+                inputs[index + 1].focus();
+            }
+        });
+
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Backspace' && input.value === '' && index > 0) {
+                inputs[index - 1].focus();
+            }
+        });
     });
 
-    input.addEventListener('keydown', (e) => {
-        if (e.key === 'Backspace' && input.value === '' && index > 0) {
-            inputs[index - 1].focus();
-        }
-    });
-});
+    const joinBtn = document.getElementById("joinGameBtn");
+    if (joinBtn) {
+        joinBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            let code = "";
+            inputs.forEach(input => {
+                code += input.value;
+            });
 
-// Include session_id in join_game
-document.getElementById("joinGameBtn").addEventListener("click", function () {
-    let code = "";
-    inputs.forEach(input => {
-        code += input.value;
-    });
+            if (code.length < 6) {
+                alert("Please enter the full 6-digit code.");
+                return;
+            }
 
-    if (code.length < 6) {
-        alert("Please enter the full 6-digit code.");
-        return;
+            if (!sessionId) {
+                alert("Session not ready. Please wait and try again.");
+                return;
+            }
+
+            socket.emit('join_game', {
+                code: code,
+                session_id: sessionId
+            });
+        });
     }
 
-    if (!sessionId) {
-        alert("Session not ready. Please wait and try again.");
-        return;
-    }
-
-    socket.emit('join_game', {
-        code: code,
-        session_id: sessionId  // NEW: Include session
+    socket.on('join_success', function (data) {
+        window.location.href = "/game?room=" + data.room;
     });
-});
 
-socket.on('join_success', function (data) {
-    window.location.href = "/game?room=" + data.room;
-});
-
-socket.on('error_msg', function (data) {
-    alert(data.msg);
-    inputs.forEach(input => input.value = '');
-    inputs[0].focus();
-});
+    socket.on('error_msg', function (data) {
+        alert(data.msg);
+        inputs.forEach(input => input.value = '');
+        inputs[0].focus();
+    });
+}); 

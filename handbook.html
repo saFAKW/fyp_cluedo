@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rulebook</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="handbook.css">
+</head>
+<body>
+
+<p class="site-title">Rulebook</p>
+
+<div class="book-wrapper">
+  <div class="book" id="book">
+    <div class="spine"></div>
+
+    <!-- PAGE 5 (bottom of stack) -->
+    <div class="page" id="page-5">
+      <div class="page-front">
+        <div class="page-header">
+          <span class="page-chapter">Index</span>
+          <span class="page-num">9</span>
+        </div>
+        <div class="page-title">Index &amp; Quick Reference</div>
+        <div class="rules-area" id="rules-5f"></div>
+        <div class="page-footer"><span class="footer-ornament">— ✦ —</span></div>
+      </div>
+      <div class="page-back back-cover-face">
+        <div class="bc-ornament">✦ ✦ ✦</div>
+        <div class="bc-text">End of Rulebook</div>
+      </div>
+    </div>
+
+    <!-- PAGE 4 -->
+    <div class="page" id="page-4">
+      <div class="page-front">
+        <div class="page-header">
+          <span class="page-chapter">Appendix</span>
+          <span class="page-num">7</span>
+        </div>
+        <div class="page-title">Notes &amp; References</div>
+        <div class="rules-area" id="rules-4f"></div>
+        <div class="page-footer"><span class="footer-ornament">— ✦ —</span></div>
+      </div>
+      <div class="page-back">
+        <div class="page-header">
+          <span class="page-chapter">Final Section</span>
+          <span class="page-num">8</span>
+        </div>
+        <div class="page-title">Closing Remarks</div>
+        <div class="rules-area" id="rules-4b"></div>
+        <div class="page-footer"><span class="footer-ornament">— ✦ —</span></div>
+      </div>
+    </div>
+
+    <!-- PAGE 3 -->
+    <div class="page" id="page-3">
+      <div class="page-front">
+        <div class="page-header">
+          <span class="page-chapter">Section V</span>
+          <span class="page-num">5</span>
+        </div>
+        <div class="page-title">Special Conditions</div>
+        <div class="rules-area" id="rules-3f"></div>
+        <div class="page-footer"><span class="footer-ornament">— ✦ —</span></div>
+      </div>
+      <div class="page-back">
+        <div class="page-header">
+          <span class="page-chapter">Section VI</span>
+          <span class="page-num">6</span>
+        </div>
+        <div class="page-title">Amendments &amp; Exceptions</div>
+        <div class="rules-area" id="rules-3b"></div>
+        <div class="page-footer"><span class="footer-ornament">— ✦ —</span></div>
+      </div>
+    </div>
+
+    <!-- PAGE 2 -->
+    <div class="page" id="page-2">
+      <div class="page-front">
+        <div class="page-header">
+          <span class="page-chapter">Section III</span>
+          <span class="page-num">3</span>
+        </div>
+        <div class="page-title">Player Conduct</div>
+        <div class="rules-area" id="rules-2f"></div>
+        <div class="page-footer"><span class="footer-ornament">— ✦ —</span></div>
+      </div>
+      <div class="page-back">
+        <div class="page-header">
+          <span class="page-chapter">Section IV</span>
+          <span class="page-num">4</span>
+        </div>
+        <div class="page-title">Scoring &amp; Penalties</div>
+        <div class="rules-area" id="rules-2b"></div>
+        <div class="page-footer"><span class="footer-ornament">— ✦ —</span></div>
+      </div>
+    </div>
+
+    <!-- PAGE 1 -->
+    <div class="page" id="page-1">
+      <div class="page-front">
+        <div class="page-header">
+          <span class="page-chapter">Section I</span>
+          <span class="page-num">1</span>
+        </div>
+        <div class="page-title">Introduction &amp; Overview</div>
+        <div class="rules-area" id="rules-1f"></div>
+        <div class="page-footer"><span class="footer-ornament">— ✦ —</span></div>
+      </div>
+      <div class="page-back">
+        <div class="page-header">
+          <span class="page-chapter">Section II</span>
+          <span class="page-num">2</span>
+        </div>
+        <div class="page-title">Core Rules</div>
+        <div class="rules-area" id="rules-1b"></div>
+        <div class="page-footer"><span class="footer-ornament">— ✦ —</span></div>
+      </div>
+    </div>
+
+    <!-- COVER sits on top of everything — flips away on first Next -->
+    <div class="page" id="cover">
+      <div class="page-front cover-front">
+        <div class="cover-ornament">✦ ✦ ✦</div>
+        <div class="cover-title">Rule<br>Book</div>
+        <div class="cover-line"></div>
+        <div class="cover-subtitle">Official Edition</div>
+      </div>
+      <div class="page-back" style="background:#f5f0e8;"></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="nav">
+  <button class="nav-btn" id="prev-btn" onclick="prevPage()" disabled>← Prev</button>
+  <span class="nav-indicator" id="indicator">Cover</span>
+  <button class="nav-btn" id="next-btn" onclick="nextPage()">Next →</button>
+</div>
+
+<script src="handbook.js"></script>
+</body>
+</html>

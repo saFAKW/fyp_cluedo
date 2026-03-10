@@ -1,0 +1,264 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #1a1a1a;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: 'EB Garamond', serif;
+  padding: 40px 20px;
+  gap: 30px;
+}
+
+p.site-title {
+  color: #555;
+  font-family: 'Playfair Display', serif;
+  font-size: 13px;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  font-weight: 400;
+}
+
+/* ── Book shell ── */
+.book-wrapper {
+  perspective: 2000px;
+  width: 520px;
+  height: 680px;
+  position: relative;
+}
+
+.book {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+}
+
+/* Depth shadow pages behind */
+.book::before {
+  content: '';
+  position: absolute;
+  left: -6px; top: 4px;
+  width: 100%; height: 100%;
+  background: #d4cfc5;
+  border: 1px solid #bbb;
+  z-index: 0;
+}
+.book::after {
+  content: '';
+  position: absolute;
+  left: -12px; top: 8px;
+  width: 100%; height: 100%;
+  background: #cac4b9;
+  border: 1px solid #b0a898;
+  z-index: 0;
+}
+
+.spine {
+  position: absolute;
+  left: -18px; top: 0;
+  width: 18px; height: 100%;
+  background: linear-gradient(to right, #111, #2d2d2d);
+  z-index: 0;
+}
+
+/* ── Every leaf: cover + inner pages ── */
+.page {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transition: transform 0.85s cubic-bezier(0.645, 0.045, 0.355, 1.000);
+  transform-origin: left center;
+  transform: rotateY(0deg);
+}
+
+.page.flipped {
+  transform: rotateY(-180deg);
+}
+
+.page-front,
+.page-back {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border: 1px solid #ccc;
+  padding: 50px 45px 36px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #f5f0e8;
+}
+
+.page-front {
+  box-shadow: 4px 4px 20px rgba(0,0,0,0.45), inset -3px 0 8px rgba(0,0,0,0.07);
+}
+
+.page-back {
+  transform: rotateY(180deg);
+  background: #f0ebe0;
+  box-shadow: -4px 4px 20px rgba(0,0,0,0.45), inset 3px 0 8px rgba(0,0,0,0.07);
+}
+
+/* ── Cover leaf ── */
+.cover-front {
+  background: #0f0f0f !important;
+  border-color: #2a2a2a !important;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  text-align: center;
+}
+.cover-front::before {
+  content: '';
+  position: absolute;
+  inset: 12px;
+  border: 1px solid #222;
+  pointer-events: none;
+}
+.cover-front::after {
+  content: '';
+  position: absolute;
+  inset: 20px;
+  border: 1px solid #1a1a1a;
+  pointer-events: none;
+}
+
+.cover-ornament { color: #444; font-size: 26px; letter-spacing: 0.25em; }
+
+.cover-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 44px;
+  color: #e0e0e0;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.cover-line { width: 60px; height: 1px; background: #2a2a2a; }
+
+.cover-subtitle {
+  font-size: 12px;
+  color: #3e3e3e;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+}
+
+/* ── Back cover face ── */
+.back-cover-face {
+  background: #0f0f0f !important;
+  border-color: #2a2a2a !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 14px;
+}
+
+.bc-ornament { color: #2e2e2e; font-size: 22px; letter-spacing: 0.3em; }
+
+.bc-text {
+  font-family: 'Playfair Display', serif;
+  color: #383838;
+  font-size: 15px;
+  letter-spacing: 0.2em;
+  font-style: italic;
+}
+
+/* ── Inner page layout ── */
+.page-header {
+  border-bottom: 2px solid #1a1a1a;
+  padding-bottom: 13px;
+  margin-bottom: 22px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.page-chapter {
+  font-size: 11px;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: #888;
+  font-style: italic;
+}
+
+.page-num {
+  font-family: 'Playfair Display', serif;
+  font-size: 13px;
+  color: #aaa;
+}
+
+.page-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 26px;
+  color: #111;
+  margin-bottom: 18px;
+  line-height: 1.2;
+  font-weight: 700;
+  font-style: italic;
+}
+
+.rules-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.rule-line {
+  border: none;
+  border-bottom: 1px solid #c8bfa8;
+  background: transparent;
+  font-family: 'EB Garamond', serif;
+  font-size: 16px;
+  color: #1a1a1a;
+  padding: 8px 4px;
+  width: 100%;
+  outline: none;
+  line-height: 1.5;
+  transition: background 0.15s;
+}
+
+.rule-line::placeholder { color: #bbb; font-style: italic; }
+.rule-line:focus { background: rgba(0,0,0,0.03); }
+
+.page-footer {
+  margin-top: 18px;
+  border-top: 1px solid #d0c8b4;
+  padding-top: 11px;
+  display: flex;
+  justify-content: center;
+}
+
+.footer-ornament { font-size: 17px; color: #bbb; letter-spacing: 0.3em; }
+
+/* ── Navigation ── */
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.nav-btn {
+  background: none;
+  border: 1px solid #444;
+  color: #bbb;
+  font-family: 'EB Garamond', serif;
+  font-size: 14px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 10px 24px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nav-btn:hover:not(:disabled) { background: #ccc; color: #111; border-color: #ccc; }
+.nav-btn:disabled { opacity: 0.25; cursor: not-allowed; }
+
+.nav-indicator {
+  color: #555;
+  font-family: 'Playfair Display', serif;
+  font-size: 13px;
+  letter-spacing: 0.15em;
+  min-width: 110px;
+  text-align: center;
+}
