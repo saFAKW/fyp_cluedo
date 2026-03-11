@@ -1,4 +1,4 @@
-const cards = ["Knife", "Professor Plum", "Library"]; //temporary for testing, remove when linking
+const cards = ["Knife", "Professor Plum", "Library"]; //placeholder, remove when linking!!
 
 const findings = [
     "Kitchen", "Ballroom", "Conservatory", "Dining Room", "Lounge", "Hall", "Study", "Library", "Billiard Room",
@@ -38,10 +38,6 @@ function generateCards() {
         cardItem.textContent = cards[i];
         cardsContent.appendChild(cardItem);
     }
-}
-
-function generateLettersSend(type) {
-    // placeholder
 }
 
 function generateLettersRecieved() {
@@ -106,6 +102,33 @@ function closeLetterModal() {
 }
 
 let selectedReplyCard = undefined; // undefined = nothing chosen yet, null = "none" chosen
+
+function openSendLetterModal() {
+    document.getElementById('selectSuspect').value = '';
+    document.getElementById('selectWeapon').value = '';
+    document.getElementById('selectRoom').value = '';
+    document.getElementById('sendLetterError').textContent = '';
+    document.getElementById('sendLetterModal').classList.add('active');
+}
+
+function closeSendLetterModal() {
+    document.getElementById('sendLetterModal').classList.remove('active');
+}
+
+function submitSendLetter() {
+    const suspect = document.getElementById('selectSuspect').value;
+    const weapon  = document.getElementById('selectWeapon').value;
+    const room    = document.getElementById('selectRoom').value;
+
+    if (!suspect || !weapon || !room) {
+        document.getElementById('sendLetterError').textContent = 'Please select a suspect, weapon, and room.';
+        return;
+    }
+
+    addLetter('You', 'All Players', suspect, weapon, room);
+    closeSendLetterModal();
+}
+
 
 function replyToLetter() {
     if (currentLetterId === null) return;
@@ -178,6 +201,7 @@ function addLetter(sender, recipient, suspect, weapon, room) {
     generateLettersRecieved();
 }
 
+//placeholder function again, remove when linking!!
 function createTestLetter() {
     addLetter(
         "Professor Plum",
@@ -214,4 +238,4 @@ function handleCheckbox(number) {
 
 generateFindings();
 generateCards();
-createTestLetter();
+createTestLetter(); //remember to remove when linking!!

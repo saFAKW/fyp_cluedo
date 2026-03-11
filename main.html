@@ -49,6 +49,64 @@
         </div>
     </div>
 
+    <!-- Send Letter Rectangle -->
+    <div class="send-letter-btn" onclick="openSendLetterModal()">
+        <span>✉ Send Letter</span>
+    </div>
+
+    <!-- Send Letter Modal -->
+    <div class="modal-overlay" id="sendLetterModal">
+        <div class="modal-content">
+            <div class="modal-header">Send a Letter</div>
+            <div class="modal-body">
+                <div class="send-field">
+                    <label for="selectSuspect">Suspect</label>
+                    <select id="selectSuspect" class="send-select">
+                        <option value="">— Choose a suspect —</option>
+                        <option>Miss Scarlet</option>
+                        <option>Colonel Mustard</option>
+                        <option>Reverend Green</option>
+                        <option>Mrs. Peacock</option>
+                        <option>Professor Plum</option>
+                        <option>Dr. Orchid</option>
+                    </select>
+                </div>
+                <div class="send-field">
+                    <label for="selectWeapon">Weapon</label>
+                    <select id="selectWeapon" class="send-select">
+                        <option value="">— Choose a weapon —</option>
+                        <option>Knife</option>
+                        <option>Revolver</option>
+                        <option>Rope</option>
+                        <option>Lead Pipe</option>
+                        <option>Wrench</option>
+                        <option>Candlestick</option>
+                    </select>
+                </div>
+                <div class="send-field">
+                    <label for="selectRoom">Room</label>
+                    <select id="selectRoom" class="send-select">
+                        <option value="">— Choose a room —</option>
+                        <option>Kitchen</option>
+                        <option>Ballroom</option>
+                        <option>Conservatory</option>
+                        <option>Dining Room</option>
+                        <option>Lounge</option>
+                        <option>Hall</option>
+                        <option>Study</option>
+                        <option>Library</option>
+                        <option>Billiard Room</option>
+                    </select>
+                </div>
+                <p id="sendLetterError" style="color:red; font-size:13px; min-height:18px; margin-top:4px;"></p>
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-button" onclick="closeSendLetterModal()">Cancel</button>
+                <button class="modal-button primary" onclick="submitSendLetter()">Send</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Right Panel - Findings -->
     <div class="panel-right" id="panelRight">
         <div class="panel-header">Findings</div>
