@@ -37,6 +37,7 @@ class Player:
             return possibleMoves
 
         def sendAccusation(self, accusation):
+            #Accusation should be a tuple of (weapon, room, suspect)
             if self.isInRoom():
                 if accusation[1] != self.location:
                     print("Your accusation must be for the room you are currently in.")
@@ -48,6 +49,7 @@ class Player:
                 return None
 
         def receiveAccusation(self, accusation):
+            #Accusation should be a tuple of (weapon, room, suspect)
             possibleCards = []
             for card in accusation:
                 if card in self.hand:
