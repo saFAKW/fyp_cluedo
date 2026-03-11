@@ -1,4 +1,4 @@
-const cards = []; 
+const cards = ["Knife", "Professor Plum", "Library"]; //temporary for testing, remove when linking
 
 const findings = [
     "Kitchen", "Ballroom", "Conservatory", "Dining Room", "Lounge", "Hall", "Study", "Library", "Billiard Room",
@@ -34,14 +34,14 @@ function generateCards() {
 
     for (let i=0; i <= (cards.length-1); i++){
         const cardItem = document.createElement('div');
-        cardItem.className = cards[i];
+        cardItem.className = 'card-item';
         cardItem.textContent = cards[i];
         cardsContent.appendChild(cardItem);
     }
 }
 
 function generateLettersSend(type) {
-    pass
+    // placeholder
 }
 
 function generateLettersRecieved() {
@@ -105,12 +105,63 @@ function closeLetterModal() {
     currentLetterId = null;
 }
 
+let selectedReplyCard = undefined; // undefined = nothing chosen yet, null = "none" chosen
+
 function replyToLetter() {
-    if (currentLetterId !== null) {
-        const letter = letters[currentLetterId];
-        alert(`Replying to ${letter.sender}...`);
-        closeLetterModal();
+    if (currentLetterId === null) return;
+    const letter = letters[currentLetterId];
+
+    // Set title
+    document.getElementById('replyModalTitle').textContent = `Reply to ${letter.sender}`;
+
+    // Build card options
+    const container = document.getElementById('replyCardsContainer');
+    container.innerHTML = '';
+    selectedReplyCard = undefined;
+
+    // "No card" option
+    const noneEl = document.createElement('div');
+    noneEl.className = 'reply-card-none';
+    noneEl.textContent = 'No card';
+    noneEl.dataset.value = '__none__';
+    noneEl.onclick = () => selectReplyCard(noneEl);
+    container.appendChild(noneEl);
+
+    // One element per card in hand
+    cards.forEach((cardName, i) => {
+        const el = document.createElement('div');
+        el.className = 'reply-card-option';
+        el.textContent = cardName;
+        el.dataset.value = cardName;
+        el.onclick = () => selectReplyCard(el);
+        container.appendChild(el);
+    });
+
+    // Close letter modal, open reply modal
+    closeLetterModal();
+    document.getElementById('replyModal').classList.add('active');
+}
+
+function selectReplyCard(el) {
+    // Deselect all
+    document.querySelectorAll('.reply-card-option, .reply-card-none').forEach(e => e.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedReplyCard = el.dataset.value;
+}
+
+function sendReply() {
+    if (selectedReplyCard === undefined) {
+        // Nothing selected — nudge the user
+        document.getElementById('replyCardsContainer').style.outline = '2px solid red';
+        setTimeout(() => document.getElementById('replyCardsContainer').style.outline = '', 800);
+        return;
     }
+    closeReplyModal();
+}
+
+function closeReplyModal() {
+    document.getElementById('replyModal').classList.remove('active');
+    selectedReplyCard = undefined;
 }
 
 function addLetter(sender, recipient, suspect, weapon, room) {

@@ -314,7 +314,62 @@ body {
     background: #333;
 }
 
-/* Card items - playing card style */
+/* Reply card selector */
+.reply-card-option {
+    min-width: 90px;
+    width: 90px;
+    height: 120px;
+    background: white;
+    border: 2px solid black;
+    border-radius: 8px;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+    flex-shrink: 0;
+}
+
+.reply-card-option:hover {
+    background: #f0f0f0;
+}
+
+.reply-card-option.selected {
+    background: black;
+    color: white;
+}
+
+.reply-card-none {
+    min-width: 90px;
+    width: 90px;
+    height: 120px;
+    background: white;
+    border: 2px dashed #999;
+    border-radius: 8px;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 12px;
+    color: #666;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+    flex-shrink: 0;
+}
+
+.reply-card-none:hover {
+    background: #f0f0f0;
+}
+
+.reply-card-none.selected {
+    background: #333;
+    color: white;
+    border-color: #333;
+}
 .cards-container {
     display: flex;
     gap: 15px;

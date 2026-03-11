@@ -20,6 +20,21 @@
         </div>
     </div>
 
+    <!-- Reply Modal -->
+    <div class="modal-overlay" id="replyModal">
+        <div class="modal-content">
+            <div class="modal-header" id="replyModalTitle">Reply</div>
+            <div class="modal-body">
+                <p style="margin-bottom:14px; font-size:14px;">Choose a card from your hand to send, or send no card:</p>
+                <div id="replyCardsContainer" style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px;"></div>
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-button" onclick="closeReplyModal()">Cancel</button>
+                <button class="modal-button primary" id="sendReplyBtn" onclick="sendReply()">Send</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Letter Modal -->
     <div class="modal-overlay" id="letterModal">
         <div class="modal-content">
