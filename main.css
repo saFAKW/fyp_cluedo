@@ -204,7 +204,230 @@ body {
     color: #666;
 }
 
-/* Card items - playing card style */
+/* Letter items */
+.letter-item {
+    padding: 12px;
+    border-bottom: 1px solid black;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.letter-item:hover {
+    background: #f0f0f0;
+}
+
+.letter-item:last-child {
+    border-bottom: none;
+}
+
+.letter-item.unread {
+    border: 3px solid #FFD700;
+    background: #FFFACD;
+}
+
+.letter-header {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.letter-preview {
+    font-size: 12px;
+    color: #666;
+}
+
+/* Letter Modal */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    border: 3px solid black;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+    padding: 25px;
+    position: relative;
+}
+
+.modal-header {
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid black;
+}
+
+.modal-body {
+    margin-bottom: 20px;
+}
+
+.letter-info {
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.letter-info strong {
+    display: inline-block;
+    width: 80px;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.modal-button {
+    padding: 10px 20px;
+    border: 2px solid black;
+    background: white;
+    cursor: pointer;
+    font-size: 14px;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.modal-button:hover {
+    background: #f0f0f0;
+}
+
+.modal-button.primary {
+    background: black;
+    color: white;
+}
+
+.modal-button.primary:hover {
+    background: #333;
+}
+
+/* Send Letter rectangle */
+.send-letter-btn {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 200px;
+    height: 100px;
+    background: white;
+    border: 2px solid black;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 100;
+    transition: background 0.2s;
+    user-select: none;
+}
+
+.send-letter-btn:hover {
+    background: #f0f0f0;
+}
+
+/* Send letter form fields */
+.send-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 14px;
+}
+
+.send-field label {
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.send-select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 2px solid black;
+    border-radius: 4px;
+    font-size: 14px;
+    background: white;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='black' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+}
+
+.send-select:focus {
+    outline: none;
+    border-color: #333;
+}
+
+/* Reply card selector */
+.reply-card-option {
+    min-width: 90px;
+    width: 90px;
+    height: 120px;
+    background: white;
+    border: 2px solid black;
+    border-radius: 8px;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+    flex-shrink: 0;
+}
+
+.reply-card-option:hover {
+    background: #f0f0f0;
+}
+
+.reply-card-option.selected {
+    background: black;
+    color: white;
+}
+
+.reply-card-none {
+    min-width: 90px;
+    width: 90px;
+    height: 120px;
+    background: white;
+    border: 2px dashed #999;
+    border-radius: 8px;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 12px;
+    color: #666;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+    flex-shrink: 0;
+}
+
+.reply-card-none:hover {
+    background: #f0f0f0;
+}
+
+.reply-card-none.selected {
+    background: #333;
+    color: white;
+    border-color: #333;
+}
 .cards-container {
     display: flex;
     gap: 15px;
