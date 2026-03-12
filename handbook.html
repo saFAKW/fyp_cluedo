@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Library</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=IM+Fell+English:ital@0;1&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="handbook.css">
+</head>
+<body>
+
+  <div class="grain"></div>
+  <div class="library-title" id="libraryTitle">The Library</div>
+  <div class="subtitle" id="subtitle">Select a volume to examine it</div>
+
+  <div class="scene">
+    <div class="shelf" id="shelf">
+
+      <div class="book-wrapper book-green" onclick="focusBook(0)">
+        <div class="book" style="--w:120px;--h:210px;--spine:24px;">
+          <div class="book-spine"><span class="book-spine-title">Rules</span></div>
+          <div class="book-front"><div class="book-title-text">Rules</div></div>
+          <div class="book-top-pages"></div>
+        </div>
+        <div class="book-shadow"></div>
+      </div>
+
+      <div class="book-wrapper book-red" onclick="focusBook(1)">
+        <div class="book" style="--w:120px;--h:210px;--spine:24px;">
+          <div class="book-spine"><span class="book-spine-title">Story &amp; Characters</span></div>
+          <div class="book-front"><div class="book-title-text">Story &amp; Character Profiles</div></div>
+          <div class="book-top-pages"></div>
+        </div>
+        <div class="book-shadow"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Focus stage -->
+  <div class="focus-stage" id="focusStage">
+    <div class="focus-book-container" id="focusBookContainer" onclick="openBook()"></div>
+  </div>
+  <div class="hint" id="hint">Click to open</div>
+  <button class="btn-close" id="btnClose" onclick="closeFocus()">← Return</button>
+
+  <!-- Open book stage -->
+  <div class="open-book-stage" id="openBookStage">
+    <div class="open-book" id="openBook">
+      <div class="page page-left" id="pageLeft">
+        <div class="page-content" id="contentLeft"></div>
+        <span class="page-number" id="pageNumLeft"></span>
+      </div>
+      <div class="open-book-spine"></div>
+      <div class="page page-right" id="pageRight">
+        <div class="page-content" id="contentRight"></div>
+        <span class="page-number" id="pageNumRight"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-nav" id="pageNav">
+    <button class="nav-btn" id="btnPrev" onclick="turnPage(-1)">◂ Prev</button>
+    <span class="page-indicator" id="pageIndicator"></span>
+    <button class="nav-btn" id="btnNext" onclick="turnPage(1)">Next ▸</button>
+  </div>
+  <button class="btn-close-book" id="btnCloseBook" onclick="closeBook()">✕ Close Book</button>
+
+  <script src="handbook.js"></script>
+</body>
+</html>
