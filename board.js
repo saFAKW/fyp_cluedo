@@ -1,55 +1,35 @@
 const svg = document.getElementById("board");
-
 const size = 30;
 const rows = 25;
 const cols = 25;
-const padding = size; // one tile of outer space for starting squares
+const padding = size;
 const ns = "http://www.w3.org/2000/svg";
-
 const boardWidth = cols * size;
 const boardHeight = rows * size;
 
 svg.setAttribute("width", boardWidth + padding * 2);
 svg.setAttribute("height", boardHeight + padding * 2);
 
-/*
-Room layout:
-r = top row
-c = left col
-w = width in tiles
-h = height in tiles
-
-*/
 const rooms = [
-  // top row
-  { name: "topLeft",     r: 0,  c: 0,  w: 6, h: 6, doors: [[5,1],[2,5]] },   // bottom, right
-  { name: "topMiddle",   r: 0,  c: 9,  w: 7, h: 6, doors: [[5,3]] },         // bottom
-  { name: "topRight",    r: 0,  c: 19, w: 6, h: 6, doors: [[5,3],[2,0]] },   // bottom, left
-
-  // middle row
-  { name: "midLeft",     r: 9,  c: 0,  w: 6, h: 7, doors: [[3,5]] },         // right
-  { name: "center",      r: 9,  c: 9,  w: 7, h: 7, doors: [[0,3]] },         // top
-  { name: "midRight",    r: 9,  c: 18, w: 7, h: 7, doors: [[3,0]] },         // left
-
-  // bottom row
-  { name: "bottomLeft",  r: 19, c: 0,  w: 6, h: 6, doors: [[0,1],[3,5]] },   // top, right
-  { name: "bottomMiddle",r: 19, c: 9,  w: 7, h: 6, doors: [[0,3]] },         // top
-  { name: "bottomRight", r: 19, c: 18, w: 7, h: 6, doors: [[0,3],[3,0]] }    // top, left
+  { name: "topLeft",     r: 0,  c: 0,  w: 6, h: 6, doors: [[5,1],[2,5]] },
+  { name: "topMiddle",   r: 0,  c: 9,  w: 7, h: 6, doors: [[5,3]] },
+  { name: "topRight",    r: 0,  c: 19, w: 6, h: 6, doors: [[5,3],[2,0]] },
+  { name: "midLeft",     r: 9,  c: 0,  w: 6, h: 7, doors: [[3,5]] },
+  { name: "center",      r: 9,  c: 9,  w: 7, h: 7, doors: [[0,3]] },
+  { name: "midRight",    r: 9,  c: 18, w: 7, h: 7, doors: [[3,0]] },
+  { name: "bottomLeft",  r: 19, c: 0,  w: 6, h: 6, doors: [[0,1],[3,5]] },
+  { name: "bottomMiddle",r: 19, c: 9,  w: 7, h: 6, doors: [[0,3]] },
+  { name: "bottomRight", r: 19, c: 18, w: 7, h: 6, doors: [[0,3],[3,0]] }
 ];
 
-const startSquares = [
-  // left side
-  { r: 8,  c: -1, color: "#d83b3b", name: "Miss Scarlet" },
-  { r: 18, c: -1, color: "#e0b12f", name: "Colonel Mustard" },
-
-  // right side
-  { r: 8,  c: 25, color: "#2e86de", name: "Mrs Peacock" },
-  { r: 18, c: 25, color: "#2ecc71", name: "Mr Green" },
-
-  // bottom side
-  { r: 25, c: 8,  color: "#f5f5f5", name: "Mrs White" },
-  { r: 25, c: 17, color: "#8e44ad", name: "Professor Plum" }
-];
+const charColors = {
+  "Miss Scarlet": "#d83b3b",
+  "Colonel Mustard": "#e0b12f",
+  "Mrs. Peacock": "#2e86de",
+  "Reverend Green": "#2ecc71",
+  "Dr. Orchid": "#f5f5f5",
+  "Professor Plum": "#8e44ad"
+};
 
 function createRect(x, y, width, height, className) {
   const rect = document.createElementNS(ns, "rect");
@@ -63,72 +43,56 @@ function createRect(x, y, width, height, className) {
 }
 
 function inAnyRoom(r, c) {
-  return rooms.some(room =>
-    r >= room.r &&
-    r < room.r + room.h &&
-    c >= room.c &&
-    c < room.c + room.w
-  );
+  return rooms.some(room => r >= room.r && r < room.r + room.h && c >= room.c && c < room.c + room.w);
 }
 
-//  Draw corridor tiles everywhere not occupied by rooms
 for (let r = 0; r < rows; r++) {
   for (let c = 0; c < cols; c++) {
     if (!inAnyRoom(r, c)) {
-      createRect(
-        padding + c * size,
-        padding + r * size,
-        size,
-        size,
-        "tile"
-      );
+      let tile = createRect(padding + c * size, padding + r * size, size, size, "tile");
+      tile.addEventListener('click', () => attemptMove(r, c));
     }
   }
 }
 
-// Draw rooms
 rooms.forEach(room => {
-  createRect(
-    padding + room.c * size,
-    padding + room.r * size,
-    room.w * size,
-    room.h * size,
-    "room"
-  );
+  let rm = createRect(padding + room.c * size, padding + room.r * size, room.w * size, room.h * size, "room");
+  rm.addEventListener('click', () => attemptMove(room.r, room.c));
 });
 
-// Draw doors INSIDE rooms
 rooms.forEach(room => {
   room.doors.forEach(([dr, dc]) => {
-    createRect(
-      padding + (room.c + dc) * size,
-      padding + (room.r + dr) * size,
-      size,
-      size,
-      "door"
-    );
+    createRect(padding + (room.c + dc) * size, padding + (room.r + dr) * size, size, size, "door");
   });
 });
 
-startSquares.forEach(start => {
-  const rect = createRect(
-    padding + start.c * size,
-    padding + start.r * size,
-    size,
-    size,
-    "start"
-  );
+createRect(padding, padding, boardWidth, boardHeight, "board-outline");
 
-  rect.setAttribute("fill", start.color);
-  rect.setAttribute("stroke", "#666");
-  rect.setAttribute("stroke-width", "1");
+const SERVER_URL = window.location.origin;
+const socket = io(SERVER_URL);
+const sessionId = localStorage.getItem('session_id');
+const params = new URLSearchParams(window.location.search);
+const roomCode = params.get('room');
+
+socket.on('connect', () => {
+    socket.emit('join_board', { room: roomCode, session_id: sessionId });
 });
 
-// Draw board outline around the actual 25x25 board
-createRect(
-  padding,
-  padding,
-  boardWidth,
-  boardHeight,
-  "board-outline"
-);
+let playerTokens = {};
+
+socket.on('board_update', (data) => {
+    Object.values(playerTokens).forEach(token => svg.removeChild(token));
+    playerTokens = {};
+    
+    data.players.forEach(p => {
+        if (p.r !== undefined && p.c !== undefined) {
+            let token = createRect(padding + p.c * size, padding + p.r * size, size, size, "start");
+            token.setAttribute("fill", charColors[p.character] || "#000");
+            playerTokens[p.session_id] = token;
+        }
+    });
+});
+
+function attemptMove(r, c) {
+    socket.emit('move_player', { room: roomCode, session_id: sessionId, r: r, c: c });
+}
