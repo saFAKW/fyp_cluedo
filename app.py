@@ -27,6 +27,15 @@ AVAILABLE_CHARACTERS = [
     "Mrs. Peacock", "Professor Plum", "Dr. Orchid"
 ]
 
+START_POSITIONS = {
+    "Miss Scarlet": (8, 0),
+    "Colonel Mustard": (18, 0),
+    "Mrs. Peacock": (8, 24),
+    "Reverend Green": (18, 24),
+    "Dr. Orchid": (24, 8),
+    "Professor Plum": (24, 17)
+}
+
 @app.route('/')
 def index():
     return render_template('menu.html')
@@ -266,12 +275,41 @@ def handle_start(data):
         emit('error_msg', {'msg': 'Only the host can start the game.'})
         return
         
-    if len(rooms[room]['players']) < 3:
-        emit('error_msg', {'msg': 'Need at least 3 players to start.'})
+    if len(rooms[room]['players']) < 2:
+        emit('error_msg', {'msg': 'Need at least 2 players to start.'})
         return
         
     rooms[room]['is_locked'] = True
+    
+    for p in rooms[room]['players']:
+        char = p.get('character')
+        pos = START_POSITIONS.get(char, (0, 0))
+        p['r'] = pos[0]
+        p['c'] = pos[1]
+        
     socketio.emit('game_starting', room=room)
+
+@socketio.on('join_board')
+def handle_join_board(data):
+    room = data.get('room')
+    if room in rooms:
+        join_room(room)
+        emit('board_update', {'players': rooms[room]['players']}, room=room)
+
+@socketio.on('move_player')
+def handle_move(data):
+    room = data.get('room')
+    session_id = data.get('session_id')
+    target_r = data.get('r')
+    target_c = data.get('c')
+    
+    if room in rooms:
+        for p in rooms[room]['players']:
+            if p.get('session_id') == session_id:
+                p['r'] = target_r
+                p['c'] = target_c
+                break
+        socketio.emit('board_update', {'players': rooms[room]['players']}, room=room)
 
 @socketio.on('disconnect')
 def handle_disconnect():
