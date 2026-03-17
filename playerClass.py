@@ -1,4 +1,3 @@
-#Needs to change based on how the board stores rooms
 roomLocations = ["Kitchen", "Ballroom", "Conservatory", "Dining Room", "Billiard Room", "Library", "Lounge", "Hall", "Study"]
 
 class Player:
@@ -12,32 +11,23 @@ class Player:
         self.isTurn = isTurn
         self.inRoom = inRoom
 
-        def checkMovement(self, diceRoll):
-            #Checks where the player can move to
-            currentX =  self.location[0]
-            currentY = self.location[1]
+    def checkMovement(self, targetX, targetY, diceRoll):
+        currentX = self.location[0]
+        currentY = self.location[1]
+        distance = abs(targetX - currentX) + abs(targetY - currentY)
+        if distance <= diceRoll and 0 <= targetX < 25 and 0 <= targetY < 25:
+            return True
+        return False
 
-            possibleMoves = []
-            for i in range(-diceRoll, diceRoll + 1):
-                for j in range(-diceRoll, diceRoll + 1):
-                    if abs(i) + abs(j) <= diceRoll:
-                        possibleMoves.append((currentX + i, currentY + j))
+    def sendAccusation(self, accusation):
+        pass
 
-            return possibleMoves
+    def receiveAccusation(self, accusation):
+        pass
 
-        def sendAccusation(self, accusation):
-            #Sends the player's accusation
-            pass
-
-        def receiveAccusation(self, accusation):
-            #Receives an accusation from another player
-            pass
-
-        def isInRoom(self):
-            #Checks if the player is in a room
-            if self.location in roomLocations:
-                self.inRoom = True
-            else:
-                self.inRoom = False
-
-            return self.inRoom
+    def isInRoom(self, room_name=None):
+        if room_name in roomLocations:
+            self.inRoom = True
+        else:
+            self.inRoom = False
+        return self.inRoom
