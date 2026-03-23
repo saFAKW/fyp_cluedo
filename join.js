@@ -57,24 +57,10 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (code.length < 6) {
-                alert("Please enter the full 6-character code.");
+                alert("Please enter the full 6-digit code.");
                 return;
             }
-
-            if (!sessionId) {
-                alert("Initializing session... please try again in 1 second.");
-
-                setTimeout(() => {
-                    if (sessionId) {
-                        joinGame(code);
-                    } else {
-                        alert("Session error. Please refresh the page.");
-                    }
-                }, 1000);
-                return;
-            }
-
-            joinGame(code);
+            window.location.href = `/wait?room=${code}`;
         });
     }
 
@@ -94,21 +80,21 @@ function joinGame(code) {
         body: JSON.stringify({
             code: code,
             sessionId: sessionId,
-            displayName: "" 
+            displayName: ""
         })
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.error) {
-            alert(data.error);
-            const inputs = document.querySelectorAll('.code-box');
-            inputs.forEach(input => input.value = '');
-            inputs[0].focus();
-        } else if (data.success) {
-            window.location.href = "/wait?room=" + data.room + "&role=player";
-        }
-    })
-    .catch(error => {
-        alert("Connection error.");
-    });
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert(data.error);
+                const inputs = document.querySelectorAll('.code-box');
+                inputs.forEach(input => input.value = '');
+                inputs[0].focus();
+            } else if (data.success) {
+                window.location.href = "/wait?room=" + data.room + "&role=player";
+            }
+        })
+        .catch(error => {
+            alert("Connection error.");
+        });
 }
