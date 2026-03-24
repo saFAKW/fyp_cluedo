@@ -24,15 +24,24 @@ window.addEventListener('DOMContentLoaded', () => {
     if (roomDisplay) roomDisplay.textContent = roomCode || 'Loading...';
     if (roomPreview) roomPreview.textContent = roomCode || 'Loading...';
 
-    // Get or create session
+    const waitTitle = document.getElementById('waitPageTitle');
+    if (waitTitle) waitTitle.textContent = isHost ? 'Host Game' : 'Lobby';
+
     const storedSession = localStorage.getItem('session_id');
     console.log('Stored session:', storedSession); // Debug
 
     if (storedSession) {
-        sessionId = storedSession; // Set it immediately
+        sessionId = storedSession;
         socket.emit('validate_session', { session_id: storedSession });
     } else {
         socket.emit('request_session');
+    }
+
+    // Joiners need the name step; sessionId is set above when reusing localStorage
+    if (!isHost) {
+        showUsernamePrompt();
+    } else {
+        showWaitingRoom();
     }
 });
 
@@ -42,9 +51,13 @@ socket.on('session_created', function (data) {
     sessionId = data.session_id;
     localStorage.setItem('session_id', sessionId);
 
-    // Always show username prompt for new sessions
-    console.log('Showing username prompt (new session)'); // Debug
-    showUsernamePrompt();
+    if (!isHost) {
+        console.log('Showing username prompt (new session)'); // Debug
+        showUsernamePrompt();
+    } else {
+        showWaitingRoom();
+        joinSocketRoom();
+    }
 });
 
 socket.on('session_valid', function (data) {
@@ -112,6 +125,11 @@ function showUsernamePrompt() {
             }
         });
         newNameInput.focus();
+    }
+
+    const joinBtnEl = document.getElementById('joinWithNameBtn');
+    if (joinBtnEl) {
+        joinBtnEl.disabled = !sessionId;
     }
 }
 
