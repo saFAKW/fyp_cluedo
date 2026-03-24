@@ -3,10 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sliding Panels</title>
+    <title>Main Board</title>
     <link rel="stylesheet" href="main.css">
 </head>
 <body>
+    <!-- Taskbar -->
+    <div class="taskbar">
+        <div class="taskbar-timer" id="taskbarTimer">00:00</div>
+        <div class="taskbar-players" id="taskbarPlayers">
+            <!-- Player tokens injected by JS -->
+        </div>
+        <button class="taskbar-leave" onclick="leaveGame()">Leave Game</button>
+    </div>
+
     <!-- Tab Buttons -->
     <div class="tab-left" onclick="togglePanel('left')">INBOX</div>
     <div class="tab-right" onclick="togglePanel('right')">FINDINGS</div>
@@ -124,6 +133,7 @@
             </div>
         </div>
     </div>
+    
 <script src="main.js"></script>
 </body>
 </html>

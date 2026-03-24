@@ -20,6 +20,7 @@ w = width in tiles
 h = height in tiles
 
 */
+
 const rooms = [
   // top row
   { name: "topLeft",     r: 0,  c: 0,  w: 6, h: 6, doors: [[5,1],[2,5]] },   // bottom, right
