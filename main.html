@@ -3,20 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhoDunnit</title>
+    <title>Sliding Panels</title>
     <link rel="stylesheet" href="main.css">
     <link rel="stylesheet" href="board.css">
 </head>
-<body style="position: relative; overflow: hidden; background: #d9d9d9; margin: 0; min-height: 100vh;">
-    
-    <div style="display: flex; justify-content: center; align-items: center; width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1;">
-        <svg id="board" style="box-shadow: 0px 4px 15px rgba(0,0,0,0.3);"></svg>
-    </div>
-
-    <div style="position: relative; z-index: 10;">
-        <div class="tab-left" onclick="togglePanel('left')">INBOX</div>
-        <div class="tab-right" onclick="togglePanel('right')">FINDINGS</div>
-        <div class="tab-bottom" onclick="togglePanel('bottom')">CARDS</div>
+<body>
+    <!-- Tab Buttons -->
+    <div class="tab-left" onclick="togglePanel('left')">INBOX</div>
+    <div class="tab-right" onclick="togglePanel('right')">FINDINGS</div>
+    <div class="tab-bottom" onclick="togglePanel('bottom')">CARDS</div>
 
         <div class="panel-left" id="panelLeft">
             <div class="panel-header">Inbox</div>
@@ -120,9 +115,6 @@
             </div>
         </div>
     </div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
-<script src="board.js"></script>
 <script src="main.js"></script>
 </body>
 </html>

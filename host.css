@@ -1,62 +1,184 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&display=swap');
+
+:root {
+  --olive:    #748B75;
+  --cream:    #FBD1A2;
+  --coffee:   #2E1E0F;
+  --copper:   #C8553D;
+  --mauve:    #B0413E;
+  --border:   #3e2e1a;
+  --panel-bg: #f5ede0;
+  --muted:    #9a8878;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+
 body {
-    font-family: "Georgia", serif;
-    background: #fafafa;
-    text-align: center;
-    padding: 40px;
+  font-family: 'EB Garamond', serif;
+  background: var(--coffee);
+  color: var(--coffee);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
 }
 
+/* ── Card ── */
+.card {
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 52px 56px;
+  position: relative;
+  box-shadow: 6px 6px 32px rgba(0,0,0,0.55);
+  width: 100%;
+  max-width: 680px;
+  text-align: center;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 10px;
+  border: 1px solid var(--border);
+  pointer-events: none;
+}
+.card::after {
+  content: '';
+  position: absolute;
+  inset: 18px;
+  border: 1px solid rgba(62,46,26,0.35);
+  pointer-events: none;
+}
+
+/* ── Title ── */
 .title {
-    font-size: 42px;
-    margin-bottom: 40px;
+  font-family: 'Playfair Display', serif;
+  font-size: 52px;
+  font-weight: 700;
+  font-style: italic;
+  color: var(--coffee);
+  margin: 0 0 4px 0;
+  line-height: 1.0;
+  letter-spacing: 0.01em;
+  text-align: center;
 }
 
+/* ── Ornament ── */
+.ornament {
+  display: block;
+  text-align: center;
+  color: var(--olive);
+  font-size: 16px;
+  letter-spacing: 0.35em;
+  margin: 0 0 32px 0;
+}
+
+/* ── Inner layout ── */
 .container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 36px;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
 }
 
+/* ── Dropdown panel ── */
 .dropdown-box {
-    background: #f9d854;
-    padding: 30px;
-    border-radius: 25px;
-    width: 220px;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+  background: var(--coffee);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 28px 24px;
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  position: relative;
+}
+
+.dropdown-box::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border: 1px solid rgba(62,46,26,0.8);
+  pointer-events: none;
 }
 
 .dropdown-box label {
-    font-weight: bold;
+  font-family: 'EB Garamond', serif;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--cream);
+  display: block;
+  margin-bottom: 4px;
 }
 
 .dropdown-box select {
-    padding: 8px;
-    border-radius: 10px;
-    border: none;
-    font-size: 15px;
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 2px;
+  border: 1px solid #5a4030;
+  font-family: 'EB Garamond', serif;
+  font-size: 15px;
+  background: #3e2810;
+  color: var(--cream);
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  position: relative;
+  z-index: 1;
+}
+.dropdown-box select:focus {
+  border-color: var(--copper);
 }
 
+.dropdown-box select option {
+  background: #3e2810;
+}
+
+/* ── Make Game button ── */
 .btn {
-    background: #333;
-    color: white;
-    border: none;
-    padding: 15px 25px;
-    font-size: 16px;
-    border-radius: 10px;
-    cursor: pointer;
+  align-self: center;
+  padding: 14px 30px;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  font-family: 'EB Garamond', serif;
+  font-size: 15px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  cursor: pointer;
+  background: var(--copper);
+  color: var(--cream);
+  border-color: var(--copper);
+  transition: all 0.2s ease;
+  white-space: nowrap;
 }
-
 .btn:hover {
-    background: #555;
+  background: var(--mauve);
+  border-color: var(--mauve);
 }
 
+/* ── Error / info box ── */
 .error-box {
-    background: #97b5ff;
-    padding: 25px;
-    width: 220px;
-    border-radius: 20px;
-    color: #0a1b69;
-    font-style: italic;
+  background: var(--panel-bg);
+  border: 1px solid #c8b89a;
+  border-radius: 2px;
+  padding: 20px 20px;
+  font-family: 'EB Garamond', serif;
+  font-style: italic;
+  color: var(--muted);
+  font-size: 15px;
+  text-align: center;
+  width: 200px;
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.5;
 }

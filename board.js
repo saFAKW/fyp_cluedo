@@ -10,6 +10,14 @@ const boardHeight = rows * size;
 svg.setAttribute("width", boardWidth + padding * 2);
 svg.setAttribute("height", boardHeight + padding * 2);
 
+/*
+Room layout:
+r = top row
+c = left col
+w = width in tiles
+h = height in tiles
+
+*/
 const rooms = [
   { name: "topLeft",     r: 0,  c: 0,  w: 6, h: 6, doors: [[5,1],[2,5]] },
   { name: "topMiddle",   r: 0,  c: 9,  w: 7, h: 6, doors: [[5,3]] },

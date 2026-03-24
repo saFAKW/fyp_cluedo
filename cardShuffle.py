@@ -61,5 +61,3 @@ if __name__ == "__main__":
     for i, hand in enumerate(player_hands):
         print(f"Player {i+1} hand: {hand}")
     print(f"Hidden Cards: {hidden_cards}")
-    
-    

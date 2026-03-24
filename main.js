@@ -1,4 +1,61 @@
-const cards = ["Knife", "Professor Plum", "Library"]; //placeholder, remove when linking!!
+// ── Taskbar ──────────────────────────────────────────────────────────────
+const players = [
+    { name: "Miss Scarlet",     color: "#D95F5F" },
+    { name: "Colonel Mustard",  color: "#E6B830" },
+    { name: "Dr. Orchid",       color: "#C96DB5" },
+    { name: "Mrs. Peacock",     color: "#8AAEE0" },
+    { name: "Reverend Green",   color: "#5BBF72" },
+    { name: "Professor Plum",   color: "#7B4FA6" },
+];
+
+let currentPlayerTurn = 1; // index — change this to whoever's turn it is
+
+function renderTaskbarPlayers() {
+    const container = document.getElementById('taskbarPlayers');
+    container.innerHTML = '';
+    players.forEach((p, i) => {
+        const el = document.createElement('div');
+        el.className = 'player-token' + (i === currentPlayerTurn ? ' active-turn' : '');
+        el.style.background = p.color;
+        el.title = p.name;
+        container.appendChild(el);
+    });
+}
+
+// Timer
+let timerSeconds = 0;
+let timerInterval = null;
+
+function startTimer() {
+    timerInterval = setInterval(() => {
+        timerSeconds++;
+        updateTimerDisplay();
+    }, 1000);
+}
+
+function resetTimer() {
+    timerSeconds = 0;
+    updateTimerDisplay();
+}
+
+function updateTimerDisplay() {
+    const mm = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
+    const ss = String(timerSeconds % 60).padStart(2, '0');
+    document.getElementById('taskbarTimer').textContent = `${mm}:${ss}`;
+}
+
+function setPlayerTurn(index) {
+    currentPlayerTurn = index;
+    renderTaskbarPlayers();
+    resetTimer();
+}
+
+function leaveGame() {
+    if (confirm('Are you sure you want to leave the game?')) {
+        window.location.href = 'menu.html';
+    }
+}
+
 
 const findings = [
     "Kitchen", "Ballroom", "Conservatory", "Dining Room", "Lounge", "Hall", "Study", "Library", "Billiard Room",
@@ -238,4 +295,12 @@ function handleCheckbox(number) {
 
 generateFindings();
 generateCards();
-createTestLetter(); //remember to remove when linking!!
+createTestLetter(); //placeholder, remember to remove when linking!!
+renderTaskbarPlayers();
+startTimer();
+
+// ── TEST: cycle through players every 3 seconds — remove when linking!! ──
+setInterval(() => {
+    currentPlayerTurn = (currentPlayerTurn + 1) % players.length;
+    setPlayerTurn(currentPlayerTurn);
+}, 3000);
