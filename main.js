@@ -52,9 +52,12 @@ function setPlayerTurn(index) {
 
 function leaveGame() {
     if (confirm('Are you sure you want to leave the game?')) {
-        window.location.href = 'menu.html';
+        alert('You have left the game.');
     }
 }
+
+// ── End Taskbar ───────────────────────────────────────────────────────────
+
 
 
 const findings = [
