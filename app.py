@@ -27,6 +27,15 @@ AVAILABLE_CHARACTERS = [
     "Mrs. Peacock", "Professor Plum", "Dr. Orchid"
 ]
 
+START_POSITIONS = {
+    "Miss Scarlet": (8, 0),
+    "Colonel Mustard": (18, 0),
+    "Mrs. Peacock": (8, 24),
+    "Reverend Green": (18, 24),
+    "Dr. Orchid": (24, 8),
+    "Professor Plum": (24, 17)
+}
+
 @app.route('/')
 def index():
     return render_template('menu.html')
@@ -61,48 +70,92 @@ def api_join_game():
     
     room = data.get('code')
     session_id = data.get('sessionId')
-    name = data.get('displayName')
+    name = data.get('displayName')  # This is the username from wait.js
     
+    # Validate session
     if not session_exists(session_id):
         return jsonify({"error": "Invalid session"}), 401
-        
+    
+    # Validate room exists    
     if room not in rooms:
         return jsonify({"error": "Invalid Room Code"}), 404
-        
+    
+    # Check if player already in room (reconnection)
     exists = next((p for p in rooms[room]['players'] if p.get('session_id') == session_id), None)
     if exists:
         update_session(session_id, {'room_code': room})
         is_host = get_session(session_id).get('is_host', False)
-        return jsonify({"success": True, "room": room, "character": exists['character'], "is_host": is_host}), 200
+        return jsonify({
+            "success": True, 
+            "room": room, 
+            "character": exists['character'], 
+            "is_host": is_host
+        }), 200
 
+    # Check if game already started
     if rooms[room].get('is_locked'):
         return jsonify({"error": "Game already started"}), 403
-        
+    
+    # Check if room is full
     max_players = int(rooms[room]['meta']['players'])
     if len(rooms[room]['players']) >= max_players:
         return jsonify({"error": "The room is full"}), 403
-        
+    
+    
+    # Check if name provided
+    if not name or not name.strip():
+        return jsonify({"error": "Name cannot be empty"}), 400
+    
+    name = name.strip()
+    
+    # Check for duplicate username in this room
+    if is_username_taken_in_room(name, room, exclude_session_id=session_id):
+        return jsonify({"error": f"Name '{name}' is already taken in this room"}), 400
+    
+    # Check username length
+    if len(name) < 2:
+        return jsonify({"error": "Name must be at least 2 characters"}), 400
+    
+    if len(name) > 20:
+        return jsonify({"error": "Name must be less than 20 characters"}), 400
+    
+    
+    # Find available character
     used_chars = [p.get('character') for p in rooms[room]['players']]
     assigned_character = next((c for c in AVAILABLE_CHARACTERS if c not in used_chars), None)
     
     if not assigned_character:
         return jsonify({"error": "No characters available"}), 403
 
-    player_name = name if name else assigned_character
+    # Use the provided name (not character name)
+    player_name = name  # ← Changed: always use provided name
     
-    player_data = {'name': player_name, 'character': assigned_character, 'session_id': session_id}
+    # Create player data
+    player_data = {
+        'name': player_name, 
+        'character': assigned_character, 
+        'session_id': session_id
+    }
     rooms[room]['players'].append(player_data)
     
+    # Update session with username and room
     update_session(session_id, {
         'username': player_name,
         'room_code': room,
         'is_host': False
     })
     
+    # Notify other players in room
     socketio.emit('player_joined', {'players': rooms[room]['players']}, room=room)
     
-    return jsonify({"success": True, "room": room, "character": assigned_character, "is_host": False}), 200
-
+    print(f"Player '{player_name}' joined room {room} as {assigned_character}")
+    
+    return jsonify({
+        "success": True, 
+        "room": room, 
+        "character": assigned_character, 
+        "is_host": False
+    }), 200
 @socketio.on('request_session')
 def handle_request_session():
     session_data = create_session()
@@ -266,12 +319,41 @@ def handle_start(data):
         emit('error_msg', {'msg': 'Only the host can start the game.'})
         return
         
-    if len(rooms[room]['players']) < 3:
-        emit('error_msg', {'msg': 'Need at least 3 players to start.'})
+    if len(rooms[room]['players']) < 2:
+        emit('error_msg', {'msg': 'Need at least 2 players to start.'})
         return
         
     rooms[room]['is_locked'] = True
+    
+    for p in rooms[room]['players']:
+        char = p.get('character')
+        pos = START_POSITIONS.get(char, (0, 0))
+        p['r'] = pos[0]
+        p['c'] = pos[1]
+        
     socketio.emit('game_starting', room=room)
+
+@socketio.on('join_board')
+def handle_join_board(data):
+    room = data.get('room')
+    if room in rooms:
+        join_room(room)
+        emit('board_update', {'players': rooms[room]['players']}, room=room)
+
+@socketio.on('move_player')
+def handle_move(data):
+    room = data.get('room')
+    session_id = data.get('session_id')
+    target_r = data.get('r')
+    target_c = data.get('c')
+    
+    if room in rooms:
+        for p in rooms[room]['players']:
+            if p.get('session_id') == session_id:
+                p['r'] = target_r
+                p['c'] = target_c
+                break
+        socketio.emit('board_update', {'players': rooms[room]['players']}, room=room)
 
 @socketio.on('disconnect')
 def handle_disconnect():

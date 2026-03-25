@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Waiting Room</title>
+    <title>Waiting Room — Who Dunnit?</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <style>
         body { font-family: sans-serif; text-align: center; padding-top: 50px; background-color: #f4f4f4; }
@@ -19,25 +20,65 @@
         }
         #startGameBtn:hover { background-color: #218838; }
         .waiting-text { color: #888; font-style: italic; margin-top: 20px; }
+        #usernamePrompt {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            width: 100%;
+        }
+        #usernamePrompt input#usernameInput {
+            width: 100%;
+            max-width: 320px;
+            padding: 12px 14px;
+            font-size: 18px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+        #usernameError { color: #c00; min-height: 1.2em; font-size: 14px; }
+        #joinWithNameBtn {
+            padding: 12px 28px;
+            font-size: 18px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        #joinWithNameBtn:hover:not(:disabled) { background-color: #0056b3; }
+        #joinWithNameBtn:disabled { opacity: 0.6; cursor: not-allowed; }
     </style>
 </head>
+
 <body>
 
     <div class="container">
-        <h1>Host Game</h1>
-        
-        <div>Room Code:</div>
-        <div id="roomCodeDisplay" class="room-code">Loading...</div>
+        <div id="usernamePrompt">
+            <h1 id="usernamePromptTitle">Join Game</h1>
+            <p>Choose a display name for this room.</p>
+            <div>Room code: <span id="roomCodePreview" class="room-code" style="font-size: 1.25rem; letter-spacing: 3px;">—</span></div>
+            <input type="text" id="usernameInput" maxlength="20" placeholder="Your detective name" autocomplete="username">
+            <div id="usernameError"></div>
+            <button type="button" id="joinWithNameBtn">Join Game</button>
+        </div>
 
-        <h3>Names of Players Joined</h3>
-        
-        <ul id="playerList">
-            <div class="waiting-text">Waiting for players to join...</div>
-        </ul>
+        <div id="waitingRoom">
+            <h1 id="waitPageTitle">Lobby</h1>
 
-        <button id="startGameBtn">Start Game</button>
+            <div>Room Code:</div>
+            <div id="roomCodeDisplay" class="room-code">Loading...</div>
+
+            <h3>Players</h3>
+
+            <ul id="playerList">
+                <div class="waiting-text">Waiting for players to join...</div>
+            </ul>
+
+            <button id="startGameBtn">Start Game</button>
+        </div>
     </div>
-
     <script src="wait.js"></script>
 </body>
+
 </html>
