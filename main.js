@@ -307,3 +307,65 @@ setInterval(() => {
     currentPlayerTurn = (currentPlayerTurn + 1) % players.length;
     setPlayerTurn(currentPlayerTurn);
 }, 3000);
+
+/* ════════════════════════════════════════
+   DICE ROLL
+════════════════════════════════════════ */
+let player_turn = true; // set to true to show dice popup on load
+
+const DICE_PATTERNS = {
+    1: [[1,1]],
+    2: [[0,0],[2,2]],
+    3: [[0,0],[1,1],[2,2]],
+    4: [[0,0],[0,2],[2,0],[2,2]],
+    5: [[0,0],[0,2],[1,1],[2,0],[2,2]],
+    6: [[0,0],[0,2],[1,0],[1,2],[2,0],[2,2]]
+};
+
+function renderDiceDots(n) {
+    const face = document.getElementById('diceFace');
+    face.innerHTML = '';
+    const grid = Array.from({length: 9}, () => {
+        const d = document.createElement('div');
+        d.className = 'dot hidden';
+        face.appendChild(d);
+        return d;
+    });
+    DICE_PATTERNS[n].forEach(([r, c]) => grid[r * 3 + c].classList.remove('hidden'));
+}
+
+function rollDice() {
+    const btn = document.getElementById('diceRollBtn');
+    const face = document.getElementById('diceFace');
+    const result = document.getElementById('diceResult');
+    btn.disabled = true;
+    result.textContent = '';
+
+    let ticks = 0;
+    const interval = setInterval(() => {
+        renderDiceDots(Math.ceil(Math.random() * 6));
+        ticks++;
+        if (ticks >= 10) {
+            clearInterval(interval);
+            const final = Math.ceil(Math.random() * 6);
+            renderDiceDots(final);
+            face.classList.remove('shaking');
+            void face.offsetWidth;
+            face.classList.add('shaking');
+            result.textContent = `You rolled a ${final}`;
+            btn.disabled = false;
+        }
+    }, 55);
+}
+
+function openDiceModal() {
+    renderDiceDots(1);
+    document.getElementById('diceResult').textContent = '';
+    document.getElementById('diceModal').classList.add('active');
+}
+
+function closeDiceModal() {
+    document.getElementById('diceModal').classList.remove('active');
+}
+
+if (player_turn) openDiceModal();
