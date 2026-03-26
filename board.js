@@ -99,7 +99,7 @@ const rooms = [
 ];
 
 const playersData = [
-  { name: "Miss Scarlet", color: "#d83b3b", row: 2,  col: 2,  piece: null }, /* Start position for her is just for testing purposes*/
+  { name: "Miss Scarlet", color: "#d83b3b", row: 2,  col: 2,  piece: null }, // Start position for her is just for testing purposes
   { name: "Colonel Mustard", color: "#e0b12f", row: 18, col: 0,  piece: null },
   { name: "Mrs Peacock", color: "#2e86de", row: 8,  col: 24, piece: null },
   { name: "Mr Green", color: "#2ecc71", row: 18, col: 24, piece: null },
@@ -195,9 +195,10 @@ function createPlayerPiece(player) {
   player.piece = circle;
 
   circle.addEventListener("click", () => {
-  if (player === getCurrentPlayer()) {
-    startMovement(3); // test value for now
-  }
+    // Ensures players can only click the piece once at the start of their turn
+    if (player === getCurrentPlayer() && !movementInProgress && movesLeft === 0) {
+      startMovement(5);
+    }
   });
 }
 
@@ -524,6 +525,8 @@ function handleTileClick(row, col) {
 }
 
 function startMovement(rollValue) {
+  if (movementInProgress || movesLeft > 0) return;
+
   const player = getCurrentPlayer();
 
   movesLeft = rollValue;
@@ -537,6 +540,7 @@ function endTurn() {
   clearHighlights();
   movesLeft = 0;
   movementInProgress = false;
+  movementPath = [];
   currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
 }
 
