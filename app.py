@@ -54,7 +54,7 @@ def wait_page():
 
 @app.route('/game')
 def game_page():
-    return render_template('main.html')
+    return render_template('board.html')
 
 def generate_code():
     while True:
