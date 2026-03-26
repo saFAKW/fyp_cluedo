@@ -1,19 +1,28 @@
-// ── Taskbar ──────────────────────────────────────────────────────────────
-const players = [
-    { name: "Miss Scarlet",     color: "#D95F5F" },
-    { name: "Colonel Mustard",  color: "#E6B830" },
-    { name: "Dr. Orchid",       color: "#C96DB5" },
-    { name: "Mrs. Peacock",     color: "#8AAEE0" },
-    { name: "Reverend Green",   color: "#5BBF72" },
-    { name: "Professor Plum",   color: "#7B4FA6" },
+/* ------------------------------------------------
+   MAIN.JS — UI, panels, letters, dice, win/lose
+   NOTE: board.js must load before this file.
+   Player piece data lives in playersData (board.js).
+---------------------------------------------------*/
+
+const cards = ["Knife", "Professor Plum", "Library"]; // placeholder — remove when linking!!
+
+const findings = [
+    "Kitchen", "Ballroom", "Conservatory", "Dining Room", "Lounge", "Hall", "Study", "Library", "Billiard Room",
+    "Knife", "Revolver", "Rope", "Lead Pipe", "Wrench", "Candlestick",
+    "Miss Scarlet", "Colonel Mustard", "Reverend Green", "Mrs. Peacock", "Professor Plum", "Dr. Orchid"
 ];
 
-let currentPlayerTurn = 1; // index — change this to whoever's turn it is
+let letters = [];
+let currentLetterId = null;
+
+/* ── Taskbar ── */
+// Uses playersData from board.js for colours/names
+let currentPlayerTurn = 0; // index into playersData
 
 function renderTaskbarPlayers() {
     const container = document.getElementById('taskbarPlayers');
     container.innerHTML = '';
-    players.forEach((p, i) => {
+    playersData.forEach((p, i) => {
         const el = document.createElement('div');
         el.className = 'player-token' + (i === currentPlayerTurn ? ' active-turn' : '');
         el.style.background = p.color;
@@ -22,7 +31,6 @@ function renderTaskbarPlayers() {
     });
 }
 
-// Timer
 let timerSeconds = 0;
 let timerInterval = null;
 
@@ -44,6 +52,7 @@ function updateTimerDisplay() {
     document.getElementById('taskbarTimer').textContent = `${mm}:${ss}`;
 }
 
+// Called by board.js endTurn() and by test interval below
 function setPlayerTurn(index) {
     currentPlayerTurn = index;
     renderTaskbarPlayers();
@@ -56,117 +65,156 @@ function leaveGame() {
     }
 }
 
-// ── End Taskbar ───────────────────────────────────────────────────────────
+/* ── Panels ── */
+function togglePanel(panel) {
+    if (panel === 'left') {
+        document.getElementById('panelLeft').classList.toggle('active');
+        document.querySelector('.tab-left').classList.toggle('active');
+    } else if (panel === 'right') {
+        document.getElementById('panelRight').classList.toggle('active');
+        document.querySelector('.tab-right').classList.toggle('active');
+    } else if (panel === 'bottom') {
+        document.getElementById('panelBottom').classList.toggle('active');
+        document.querySelector('.tab-bottom').classList.toggle('active');
+    }
+}
 
-
-
-const findings = [
-    "Kitchen", "Ballroom", "Conservatory", "Dining Room", "Lounge", "Hall", "Study", "Library", "Billiard Room",
-    "Knife", "Revolver", "Rope", "Lead Pipe", "Wrench", "Candlestick",
-    "Miss Scarlet", "Colonel Mustard", "Reverend Green", "Mrs. Peacock", "Professor Plum", "Dr. Orchid"
-]
-
-let letters = [];
-let currentLetterId = null;
-
+/* ── Findings ── */
 function generateFindings() {
-    const findingsContent = document.getElementById('findingsContent');
-    findingsContent.innerHTML = '';
-    
-    for (let i = 0; i <= (findings.length-1); i++) {
-        const listItem = document.createElement('div');
-        listItem.className = 'list-item';
-        
-        listItem.innerHTML = `
+    const el = document.getElementById('findingsContent');
+    el.innerHTML = '';
+    findings.forEach((f, i) => {
+        const item = document.createElement('div');
+        item.className = 'list-item';
+        item.innerHTML = `
             <div class="checkbox-container">
                 <input type="checkbox" id="finding-${i}" onchange="handleCheckbox(${i})">
-                <label for="finding-${findings[i]}" class="checkbox-label">${findings[i]}</label>
-            </div>
-        `;
-        
-        findingsContent.appendChild(listItem);
-    }
-}
-
-function generateCards() {
-    const cardsContent = document.getElementById('cardsContent');
-    cardsContent.innerHTML = ''; 
-
-    for (let i=0; i <= (cards.length-1); i++){
-        const cardItem = document.createElement('div');
-        cardItem.className = 'card-item';
-        cardItem.textContent = cards[i];
-        cardsContent.appendChild(cardItem);
-    }
-}
-
-function generateLettersRecieved() {
-    const inboxContent = document.getElementById('inboxContent');
-    
-    inboxContent.innerHTML = '';
-    
-    if (letters.length === 0) {
-        inboxContent.innerHTML = '<div class="empty-state">No messages</div>';
-        return;
-    }
-    
-    letters.forEach((letter, index) => {
-        const letterItem = document.createElement('div');
-        letterItem.className = 'letter-item';
-        
-        if (!letter.read) {
-            letterItem.className += ' unread';
-        }
-        
-        letterItem.innerHTML = `
-            <div class="letter-header">From: ${letter.sender}</div>
-            <div class="letter-preview">${letter.suspect}, ${letter.weapon}, ${letter.room}</div>
-        `;
-        
-        letterItem.onclick = () => openLetter(index);
-        
-        inboxContent.appendChild(letterItem);
+                <label for="finding-${i}" class="checkbox-label">${f}</label>
+            </div>`;
+        el.appendChild(item);
     });
 }
 
-function openLetter(letterId) {
-    const letter = letters[letterId];
-    currentLetterId = letterId;
-    
-    if (!letter.read) {
-        letter.read = true;
-        generateLettersRecieved(); 
+function handleCheckbox(number) {
+    // placeholder
+}
+
+/* ── Cards ── */
+function generateCards() {
+    const el = document.getElementById('cardsContent');
+    el.innerHTML = '';
+    cards.forEach(c => {
+        const card = document.createElement('div');
+        card.className = 'card-item';
+        card.textContent = c;
+        el.appendChild(card);
+    });
+}
+
+/* ── Inbox / Letters ── */
+function generateLettersRecieved() {
+    const el = document.getElementById('inboxContent');
+    el.innerHTML = '';
+    if (letters.length === 0) {
+        el.innerHTML = '<div class="empty-state">No messages</div>';
+        return;
     }
-    
-    const modalTitle = document.getElementById('modalTitle');
-    const modalBody = document.getElementById('modalBody');
-    
-    modalTitle.textContent = `Letter from ${letter.sender}`;
-    
-    modalBody.innerHTML = `
+    letters.forEach((letter, index) => {
+        const item = document.createElement('div');
+        item.className = 'letter-item' + (letter.read ? '' : ' unread');
+        item.innerHTML = `
+            <div class="letter-header">From: ${letter.sender}</div>
+            <div class="letter-preview">${letter.suspect}, ${letter.weapon}, ${letter.room}</div>`;
+        item.onclick = () => openLetter(index);
+        el.appendChild(item);
+    });
+}
+
+function openLetter(id) {
+    const letter = letters[id];
+    currentLetterId = id;
+    if (!letter.read) { letter.read = true; generateLettersRecieved(); }
+    document.getElementById('modalTitle').textContent = `Letter from ${letter.sender}`;
+    document.getElementById('modalBody').innerHTML = `
         <div class="letter-info"><strong>From:</strong> ${letter.sender}</div>
         <div class="letter-info"><strong>To:</strong> ${letter.recipient}</div>
         <div class="letter-info"><strong>Suspect:</strong> ${letter.suspect}</div>
         <div class="letter-info"><strong>Weapon:</strong> ${letter.weapon}</div>
-        <div class="letter-info"><strong>Room:</strong> ${letter.room}</div>
-    `;
-    
-    const modal = document.getElementById('letterModal');
-    modal.classList.add('active');
+        <div class="letter-info"><strong>Room:</strong> ${letter.room}</div>`;
+    document.getElementById('letterModal').classList.add('active');
 }
 
 function closeLetterModal() {
-    const modal = document.getElementById('letterModal');
-    modal.classList.remove('active');
+    document.getElementById('letterModal').classList.remove('active');
     currentLetterId = null;
 }
 
-let selectedReplyCard = undefined; // undefined = nothing chosen yet, null = "none" chosen
+function addLetter(sender, recipient, suspect, weapon, room) {
+    letters.push({ sender, recipient, suspect, weapon, room, read: false });
+    generateLettersRecieved();
+}
 
+function createTestLetter() { // placeholder — remove when linking!!
+    addLetter("Professor Plum", "You", "Miss Scarlet", "Candlestick", "Library");
+}
+
+/* ── Reply ── */
+let selectedReplyCard = undefined;
+
+function replyToLetter() {
+    if (currentLetterId === null) return;
+    const letter = letters[currentLetterId];
+    document.getElementById('replyModalTitle').textContent = `Reply to ${letter.sender}`;
+    const container = document.getElementById('replyCardsContainer');
+    container.innerHTML = '';
+    selectedReplyCard = undefined;
+
+    const noneEl = document.createElement('div');
+    noneEl.className = 'reply-card-none';
+    noneEl.textContent = 'No card';
+    noneEl.dataset.value = '__none__';
+    noneEl.onclick = () => selectReplyCard(noneEl);
+    container.appendChild(noneEl);
+
+    cards.forEach(cardName => {
+        const el = document.createElement('div');
+        el.className = 'reply-card-option';
+        el.textContent = cardName;
+        el.dataset.value = cardName;
+        el.onclick = () => selectReplyCard(el);
+        container.appendChild(el);
+    });
+
+    closeLetterModal();
+    document.getElementById('replyModal').classList.add('active');
+}
+
+function selectReplyCard(el) {
+    document.querySelectorAll('.reply-card-option, .reply-card-none').forEach(e => e.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedReplyCard = el.dataset.value;
+}
+
+function sendReply() {
+    if (selectedReplyCard === undefined) {
+        const c = document.getElementById('replyCardsContainer');
+        c.style.outline = '2px solid red';
+        setTimeout(() => c.style.outline = '', 800);
+        return;
+    }
+    closeReplyModal();
+}
+
+function closeReplyModal() {
+    document.getElementById('replyModal').classList.remove('active');
+    selectedReplyCard = undefined;
+}
+
+/* ── Send Letter Modal ── */
 function openSendLetterModal() {
     document.getElementById('selectSuspect').value = '';
-    document.getElementById('selectWeapon').value = '';
-    document.getElementById('selectRoom').value = '';
+    document.getElementById('selectWeapon').value  = '';
+    document.getElementById('selectRoom').value    = '';
     document.getElementById('sendLetterError').textContent = '';
     document.getElementById('sendLetterModal').classList.add('active');
 }
@@ -179,20 +227,19 @@ function submitSendLetter() {
     const suspect = document.getElementById('selectSuspect').value;
     const weapon  = document.getElementById('selectWeapon').value;
     const room    = document.getElementById('selectRoom').value;
-
     if (!suspect || !weapon || !room) {
         document.getElementById('sendLetterError').textContent = 'Please select a suspect, weapon, and room.';
         return;
     }
-
     addLetter('You', 'All Players', suspect, weapon, room);
     closeSendLetterModal();
 }
 
+/* ── Final Guess Modal ── */
 function openFinalGuessModal() {
     document.getElementById('guessSuspect').value = '';
-    document.getElementById('guessWeapon').value = '';
-    document.getElementById('guessRoom').value = '';
+    document.getElementById('guessWeapon').value  = '';
+    document.getElementById('guessRoom').value    = '';
     document.getElementById('finalGuessError').textContent = '';
     document.getElementById('finalGuessModal').classList.add('active');
 }
@@ -205,19 +252,15 @@ function submitFinalGuess() {
     const suspect = document.getElementById('guessSuspect').value;
     const weapon  = document.getElementById('guessWeapon').value;
     const room    = document.getElementById('guessRoom').value;
-
     if (!suspect || !weapon || !room) {
         document.getElementById('finalGuessError').textContent = 'Please select a suspect, weapon, and room.';
         return;
     }
-
     closeFinalGuessModal();
     // TODO: send accusation to server and check against solution
 }
 
-/* ════════════════════════════════════════
-   WIN / LOSE
-════════════════════════════════════════ */
+/* ── Win / Lose ── */
 
 // ── LEADERBOARD ENTRY ──────────────────────────────────────────────────────
 // Backend: read `leaderboardEntry` after calling showResult(true, username).
@@ -226,15 +269,11 @@ let leaderboardEntry = null;
 // ──────────────────────────────────────────────────────────────────────────
 
 function showResult(won, username) {
-    if (won) {
-        leaderboardEntry = [username, timerSeconds];
-    }
-
-    document.getElementById('resultTitle').textContent  = won ? '🎉 You Win!'  : '💀 You Lose!';
+    if (won) leaderboardEntry = [username, timerSeconds];
+    document.getElementById('resultTitle').textContent   = won ? '🎉 You Win!'  : '💀 You Lose!';
     document.getElementById('resultMessage').textContent = won
         ? `Congratulations ${username}! You cracked the case in ${formatTime(timerSeconds)}.`
         : `Better luck next time, ${username}. The truth remains hidden…`;
-
     document.getElementById('resultModal').classList.add('active');
 }
 
@@ -248,128 +287,7 @@ function formatTime(s) {
     return `${mm}:${ss}`;
 }
 
-
-function replyToLetter() {
-    if (currentLetterId === null) return;
-    const letter = letters[currentLetterId];
-
-    // Set title
-    document.getElementById('replyModalTitle').textContent = `Reply to ${letter.sender}`;
-
-    // Build card options
-    const container = document.getElementById('replyCardsContainer');
-    container.innerHTML = '';
-    selectedReplyCard = undefined;
-
-    // "No card" option
-    const noneEl = document.createElement('div');
-    noneEl.className = 'reply-card-none';
-    noneEl.textContent = 'No card';
-    noneEl.dataset.value = '__none__';
-    noneEl.onclick = () => selectReplyCard(noneEl);
-    container.appendChild(noneEl);
-
-    // One element per card in hand
-    cards.forEach((cardName, i) => {
-        const el = document.createElement('div');
-        el.className = 'reply-card-option';
-        el.textContent = cardName;
-        el.dataset.value = cardName;
-        el.onclick = () => selectReplyCard(el);
-        container.appendChild(el);
-    });
-
-    // Close letter modal, open reply modal
-    closeLetterModal();
-    document.getElementById('replyModal').classList.add('active');
-}
-
-function selectReplyCard(el) {
-    // Deselect all
-    document.querySelectorAll('.reply-card-option, .reply-card-none').forEach(e => e.classList.remove('selected'));
-    el.classList.add('selected');
-    selectedReplyCard = el.dataset.value;
-}
-
-function sendReply() {
-    if (selectedReplyCard === undefined) {
-        // Nothing selected — nudge the user
-        document.getElementById('replyCardsContainer').style.outline = '2px solid red';
-        setTimeout(() => document.getElementById('replyCardsContainer').style.outline = '', 800);
-        return;
-    }
-    closeReplyModal();
-}
-
-function closeReplyModal() {
-    document.getElementById('replyModal').classList.remove('active');
-    selectedReplyCard = undefined;
-}
-
-function addLetter(sender, recipient, suspect, weapon, room) {
-    const newLetter = {
-        sender: sender,
-        recipient: recipient,
-        suspect: suspect,
-        weapon: weapon,
-        room: room,
-        read: false
-    };
-    
-    letters.push(newLetter);
-    generateLettersRecieved();
-}
-
-//placeholder function again, remove when linking!!
-function createTestLetter() {
-    addLetter(
-        "Professor Plum",
-        "You",
-        "Miss Scarlet",
-        "Candlestick",
-        "Library"
-    );
-}
-
-function togglePanel(panel) {
-    const panelLeft = document.getElementById('panelLeft');
-    const panelRight = document.getElementById('panelRight');
-    const panelBottom = document.getElementById('panelBottom');
-    const tabLeft = document.querySelector('.tab-left');
-    const tabRight = document.querySelector('.tab-right');
-    const tabBottom = document.querySelector('.tab-bottom');
-    
-    if (panel === 'left') {
-        panelLeft.classList.toggle('active');
-        tabLeft.classList.toggle('active');
-    } else if (panel === 'right') {
-        panelRight.classList.toggle('active');
-        tabRight.classList.toggle('active');
-    } else if (panel === 'bottom') {
-        panelBottom.classList.toggle('active');
-        tabBottom.classList.toggle('active');
-    }
-}
-
-function handleCheckbox(number) {
-    const checkbox = document.getElementById(`finding-${number}`);
-}
-
-generateFindings();
-generateCards();
-createTestLetter(); //placeholder, remember to remove when linking!!
-renderTaskbarPlayers();
-startTimer();
-
-// ── TEST: cycle through players every 3 seconds — remove when linking!! ──
-setInterval(() => {
-    currentPlayerTurn = (currentPlayerTurn + 1) % players.length;
-    setPlayerTurn(currentPlayerTurn);
-}, 3000);
-
-/* ════════════════════════════════════════
-   DICE ROLL
-════════════════════════════════════════ */
+/* ── Dice Roll ── */
 let player_turn = true; // set to true to show dice popup on load
 
 const DICE_PATTERNS = {
@@ -384,7 +302,7 @@ const DICE_PATTERNS = {
 function renderDiceDots(n) {
     const face = document.getElementById('diceFace');
     face.innerHTML = '';
-    const grid = Array.from({length: 9}, () => {
+    const grid = Array.from({ length: 9 }, () => {
         const d = document.createElement('div');
         d.className = 'dot hidden';
         face.appendChild(d);
@@ -394,8 +312,8 @@ function renderDiceDots(n) {
 }
 
 function rollDice() {
-    const btn = document.getElementById('diceRollBtn');
-    const face = document.getElementById('diceFace');
+    const btn    = document.getElementById('diceRollBtn');
+    const face   = document.getElementById('diceFace');
     const result = document.getElementById('diceResult');
     btn.disabled = true;
     result.textContent = '';
@@ -413,6 +331,9 @@ function rollDice() {
             face.classList.add('shaking');
             result.textContent = `You rolled a ${final}`;
             btn.disabled = false;
+            // Pass roll value to board movement system
+            startMovement(final);
+            closeDiceModal();
         }
     }, 55);
 }
@@ -426,5 +347,12 @@ function openDiceModal() {
 function closeDiceModal() {
     document.getElementById('diceModal').classList.remove('active');
 }
+
+/* ── Init ── */
+generateFindings();
+generateCards();
+createTestLetter(); // placeholder — remove when linking!!
+renderTaskbarPlayers();
+startTimer();
 
 if (player_turn) openDiceModal();
