@@ -189,6 +189,65 @@ function submitSendLetter() {
     closeSendLetterModal();
 }
 
+function openFinalGuessModal() {
+    document.getElementById('guessSuspect').value = '';
+    document.getElementById('guessWeapon').value = '';
+    document.getElementById('guessRoom').value = '';
+    document.getElementById('finalGuessError').textContent = '';
+    document.getElementById('finalGuessModal').classList.add('active');
+}
+
+function closeFinalGuessModal() {
+    document.getElementById('finalGuessModal').classList.remove('active');
+}
+
+function submitFinalGuess() {
+    const suspect = document.getElementById('guessSuspect').value;
+    const weapon  = document.getElementById('guessWeapon').value;
+    const room    = document.getElementById('guessRoom').value;
+
+    if (!suspect || !weapon || !room) {
+        document.getElementById('finalGuessError').textContent = 'Please select a suspect, weapon, and room.';
+        return;
+    }
+
+    closeFinalGuessModal();
+    // TODO: send accusation to server and check against solution
+}
+
+/* ════════════════════════════════════════
+   WIN / LOSE
+════════════════════════════════════════ */
+
+// ── LEADERBOARD ENTRY ──────────────────────────────────────────────────────
+// Backend: read `leaderboardEntry` after calling showResult(true, username).
+// Format: [username, timeInSeconds]  e.g. ["Miss Scarlet", 142]
+let leaderboardEntry = null;
+// ──────────────────────────────────────────────────────────────────────────
+
+function showResult(won, username) {
+    if (won) {
+        leaderboardEntry = [username, timerSeconds];
+    }
+
+    document.getElementById('resultTitle').textContent  = won ? '🎉 You Win!'  : '💀 You Lose!';
+    document.getElementById('resultMessage').textContent = won
+        ? `Congratulations ${username}! You cracked the case in ${formatTime(timerSeconds)}.`
+        : `Better luck next time, ${username}. The truth remains hidden…`;
+
+    document.getElementById('resultModal').classList.add('active');
+}
+
+function closeResultModal() {
+    document.getElementById('resultModal').classList.remove('active');
+}
+
+function formatTime(s) {
+    const mm = String(Math.floor(s / 60)).padStart(2, '0');
+    const ss = String(s % 60).padStart(2, '0');
+    return `${mm}:${ss}`;
+}
+
 
 function replyToLetter() {
     if (currentLetterId === null) return;
