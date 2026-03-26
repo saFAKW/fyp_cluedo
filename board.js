@@ -358,13 +358,25 @@ sendLetterBtn.addEventListener("mouseenter", () => { hoveringSendButton = true; 
 sendLetterBtn.addEventListener("mouseleave", () => { hoveringSendButton = false; scheduleHideSendLetterButton(); });
 
 rooms.forEach(room => {
-    room.element.addEventListener("mouseenter", () => { hoveringRoom = true; });
     room.element.addEventListener("mouseenter", event => {
-        const player = getCurrentBoardPlayer();
-        const currentRoom = getRoomAtPosition(player.row, player.col);
-        if (currentRoom && currentRoom.name === room.name) showSendLetterButtonAt(event.pageX, event.pageY);
+        hoveringRoom = true;
+
+        // Check the LOCAL player's position, not the current turn player
+        const localPlayer = playersData[localPlayerIndex];
+        if (!localPlayer) return;
+
+        const currentRoom = getRoomAtPosition(localPlayer.row, localPlayer.col);
+        if (currentRoom && currentRoom.name === room.name) {
+            const rect = room.element.getBoundingClientRect();
+            sendLetterBtn.style.display = "block";
+            sendLetterBtn.style.left = `${rect.right + window.scrollX + 6}px`;
+            sendLetterBtn.style.top  = `${rect.top  + window.scrollY + 6}px`;
+        }
     });
-    room.element.addEventListener("mouseleave", () => { hoveringRoom = false; scheduleHideSendLetterButton(); });
+    room.element.addEventListener("mouseleave", () => {
+        hoveringRoom = false;
+        scheduleHideSendLetterButton();
+    });
 });
 
 // Final Guess Button logic

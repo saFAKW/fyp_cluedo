@@ -295,6 +295,7 @@ function submitSendLetter() {
         room_name:  room
     });
     closeSendLetterModal();
+    requestTurnEnd();
 }
 
 /* ── Final Guess Modal ── */
