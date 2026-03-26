@@ -52,7 +52,7 @@ function setPlayerTurn(index) {
 
 function leaveGame() {
     if (confirm('Are you sure you want to leave the game?')) {
-        alert('You have left the game.');
+        window.location.href = 'menu.html';
     }
 }
 
