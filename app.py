@@ -62,6 +62,13 @@ def generate_code():
         if code not in rooms:
             return code
 
+
+def get_player_name(room, session_id):
+    for p in rooms.get(room, {}).get('players', []):
+        if p.get('session_id') == session_id:
+            return p.get('name') or p.get('character') or 'Player'
+    return 'Player'
+
 @app.route('/api/games/join', methods=['POST'])
 def api_join_game():
     data = request.get_json()
@@ -228,7 +235,8 @@ def handle_create(data):
         'host_session': session_id,
         'players': [],
         'message_history': [],
-        'is_locked': False
+        'is_locked': False,
+        'turn_index': 0
     }
     
     assigned_character = AVAILABLE_CHARACTERS[0]
@@ -330,6 +338,8 @@ def handle_start(data):
         pos = START_POSITIONS.get(char, (0, 0))
         p['r'] = pos[0]
         p['c'] = pos[1]
+
+    rooms[room]['turn_index'] = 0
         
     socketio.emit('game_starting', room=room)
 
@@ -338,7 +348,14 @@ def handle_join_board(data):
     room = data.get('room')
     if room in rooms:
         join_room(room)
-        emit('board_update', {'players': rooms[room]['players']}, room=room)
+        players = rooms[room]['players']
+        turn_index = rooms[room].get('turn_index', 0)
+        if players:
+            turn_index = turn_index % len(players)
+        else:
+            turn_index = 0
+        emit('board_update', {'players': players}, room=room)
+        emit('turn_update', {'turn_index': turn_index}, room=room)
 
 @socketio.on('move_player')
 def handle_move(data):
@@ -354,6 +371,56 @@ def handle_move(data):
                 p['c'] = target_c
                 break
         socketio.emit('board_update', {'players': rooms[room]['players']}, room=room)
+
+
+@socketio.on('roll_dice')
+def handle_roll_dice(data):
+    room = data.get('room')
+    session_id = data.get('session_id')
+
+    if room not in rooms:
+        return
+
+    room_data = rooms[room]
+    players = room_data.get('players', [])
+    if not players:
+        return
+
+    turn_index = room_data.get('turn_index', 0) % len(players)
+    current_player = players[turn_index]
+    if current_player.get('session_id') != session_id:
+        emit('error_msg', {'msg': 'It is not your turn.'})
+        return
+
+    roll = random.randint(1, 6)
+    socketio.emit('dice_rolled', {
+        'session_id': session_id,
+        'player_name': get_player_name(room, session_id),
+        'roll': roll
+    }, room=room)
+
+
+@socketio.on('end_turn')
+def handle_end_turn(data):
+    room = data.get('room')
+    session_id = data.get('session_id')
+
+    if room not in rooms:
+        return
+
+    room_data = rooms[room]
+    players = room_data.get('players', [])
+    if not players:
+        return
+
+    turn_index = room_data.get('turn_index', 0) % len(players)
+    current_player = players[turn_index]
+    if current_player.get('session_id') != session_id:
+        emit('error_msg', {'msg': 'It is not your turn.'})
+        return
+
+    room_data['turn_index'] = (turn_index + 1) % len(players)
+    socketio.emit('turn_update', {'turn_index': room_data['turn_index']}, room=room)
 
 @socketio.on('disconnect')
 def handle_disconnect():

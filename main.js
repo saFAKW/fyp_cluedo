@@ -5,6 +5,11 @@
 ---------------------------------------------------*/
 
 const cards = ["Knife", "Professor Plum", "Library"]; // placeholder — remove when linking!!
+const SERVER_URL = window.location.origin;
+const socket = io(SERVER_URL);
+const queryParams = new URLSearchParams(window.location.search);
+const roomCode = queryParams.get('room');
+let sessionId = localStorage.getItem('session_id');
 
 const findings = [
     "Kitchen", "Ballroom", "Conservatory", "Dining Room", "Lounge", "Hall", "Study", "Library", "Billiard Room",
@@ -18,6 +23,7 @@ let currentLetterId = null;
 /* ── Taskbar ── */
 // Uses playersData from board.js for colours/names
 let currentPlayerTurn = 0; // index into playersData
+let localPlayerIndex = -1;
 
 function renderTaskbarPlayers() {
     const container = document.getElementById('taskbarPlayers');
@@ -57,6 +63,36 @@ function setPlayerTurn(index) {
     currentPlayerTurn = index;
     renderTaskbarPlayers();
     resetTimer();
+}
+
+function isLocalPlayersTurn() {
+    return localPlayerIndex >= 0 && currentPlayerTurn === localPlayerIndex;
+}
+
+function requestTurnEnd() {
+    if (!roomCode || !sessionId) return;
+    socket.emit('end_turn', { room: roomCode, session_id: sessionId });
+}
+
+function emitMoveToServer(row, col) {
+    if (!roomCode || !sessionId) return;
+    socket.emit('move_player', { room: roomCode, session_id: sessionId, r: row, c: col });
+}
+
+function updateDiceModalForTurn() {
+    if (isLocalPlayersTurn()) {
+        openDiceModal();
+    } else {
+        closeDiceModal();
+    }
+}
+
+function setLocalPlayerIndexFromServerPlayers(serverPlayers) {
+    if (!sessionId || !Array.isArray(serverPlayers)) return;
+    const idx = serverPlayers.findIndex(p => p.session_id === sessionId);
+    if (idx >= 0) {
+        localPlayerIndex = idx;
+    }
 }
 
 function leaveGame() {
@@ -288,8 +324,6 @@ function formatTime(s) {
 }
 
 /* ── Dice Roll ── */
-let player_turn = true; // set to true to show dice popup on load
-
 const DICE_PATTERNS = {
     1: [[1,1]],
     2: [[0,0],[2,2]],
@@ -312,6 +346,7 @@ function renderDiceDots(n) {
 }
 
 function rollDice() {
+    if (!isLocalPlayersTurn()) return;
     const btn    = document.getElementById('diceRollBtn');
     const face   = document.getElementById('diceFace');
     const result = document.getElementById('diceResult');
@@ -329,11 +364,9 @@ function rollDice() {
             face.classList.remove('shaking');
             void face.offsetWidth;
             face.classList.add('shaking');
-            result.textContent = `You rolled a ${final}`;
+            result.textContent = `Rolling...`;
             btn.disabled = false;
-            // Pass roll value to board movement system
-            startMovement(final);
-            closeDiceModal();
+            socket.emit('roll_dice', { room: roomCode, session_id: sessionId });
         }
     }, 55);
 }
@@ -355,4 +388,64 @@ createTestLetter(); // placeholder — remove when linking!!
 renderTaskbarPlayers();
 startTimer();
 
-if (player_turn) openDiceModal();
+socket.on('session_created', (data) => {
+    sessionId = data.session_id;
+    localStorage.setItem('session_id', sessionId);
+    if (roomCode) {
+        socket.emit('join_board', { room: roomCode, session_id: sessionId });
+    }
+});
+
+socket.on('session_valid', (data) => {
+    sessionId = data.session_id;
+    if (roomCode) {
+        socket.emit('join_board', { room: roomCode, session_id: sessionId });
+    }
+});
+
+socket.on('session_invalid', () => {
+    localStorage.removeItem('session_id');
+    sessionId = null;
+    socket.emit('request_session');
+});
+
+socket.on('board_update', (data) => {
+    setLocalPlayerIndexFromServerPlayers(data.players);
+    if (typeof applyServerPlayers === 'function') {
+        applyServerPlayers(data.players);
+    }
+});
+
+socket.on('turn_update', (data) => {
+    if (typeof setBoardTurn === 'function') {
+        setBoardTurn(data.turn_index);
+    } else {
+        setPlayerTurn(data.turn_index);
+    }
+    updateDiceModalForTurn();
+});
+
+socket.on('dice_rolled', (data) => {
+    const isMine = data.session_id === sessionId;
+    const result = document.getElementById('diceResult');
+    result.textContent = isMine
+        ? `You rolled a ${data.roll}`
+        : `${data.player_name} rolled a ${data.roll}`;
+
+    renderDiceDots(data.roll);
+
+    if (isMine) {
+        startMovement(data.roll);
+        closeDiceModal();
+    }
+});
+
+socket.on('error_msg', (data) => {
+    alert(data.msg);
+});
+
+if (sessionId) {
+    socket.emit('validate_session', { session_id: sessionId });
+} else {
+    socket.emit('request_session');
+}

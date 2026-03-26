@@ -52,15 +52,34 @@ const playersData = [
     { name: "Professor Plum",  color: "#8e44ad", row: 24, col: 17, piece: null }
 ];
 
+const CHARACTER_TO_BOARD_NAME = {
+    "Miss Scarlet": "Miss Scarlet",
+    "Colonel Mustard": "Colonel Mustard",
+    "Mrs. Peacock": "Mrs Peacock",
+    "Reverend Green": "Mr Green",
+    "Dr. Orchid": "Mrs White",
+    "Professor Plum": "Professor Plum"
+};
+
 // --- Turn Timer Integration ---
 let turnTimerProcess = null;
 let turnTimerDone = false;
+let turnTimeoutId = null;
 
-function startTurnTimer() {
-    turnTimerDone = false;
+function stopTurnTimer() {
     if (turnTimerProcess) {
         turnTimerProcess.kill();
+        turnTimerProcess = null;
     }
+    if (turnTimeoutId) {
+        clearTimeout(turnTimeoutId);
+        turnTimeoutId = null;
+    }
+}
+
+function startTurnTimer() {
+    stopTurnTimer();
+    turnTimerDone = false;
     turnTimerProcess = window.require ? window.require('child_process').spawn(
         'C:/Users/safa_/openCV/Scripts/opencv/Scripts/python.exe',
         ['turn_timer_bridge.py'],
@@ -76,6 +95,14 @@ function startTurnTimer() {
             }
         });
     }
+
+    // Always enforce a 60-second turn window in browser.
+    turnTimeoutId = setTimeout(() => {
+        turnTimerDone = true;
+        if (movementInProgress === false) {
+            endTurn();
+        }
+    }, 60000);
 }
 
 function createRect(x, y, width, height, className) {
@@ -157,6 +184,22 @@ playersData.forEach(createPlayerPiece);
 
 function getCurrentBoardPlayer() {
     return playersData[currentPlayerIndex];
+}
+
+function getBoardPlayerByCharacter(characterName) {
+    const boardName = CHARACTER_TO_BOARD_NAME[characterName] || characterName;
+    return playersData.find(p => p.name === boardName) || null;
+}
+
+function applyServerPlayers(serverPlayers) {
+    if (!Array.isArray(serverPlayers)) return;
+    serverPlayers.forEach((sp) => {
+        const bp = getBoardPlayerByCharacter(sp.character);
+        if (!bp) return;
+        if (typeof sp.r === "number" && typeof sp.c === "number") {
+            animatePieceTo(bp, sp.r, sp.c, 120);
+        }
+    });
 }
 
 function getExitTilesForRoom(room) {
@@ -270,7 +313,11 @@ function confirmTrapdoorMove() {
     if (!chosenRoomName) return;
     const dest = rooms.find(r => r.name === chosenRoomName);
     if (!dest) return;
-    animatePieceTo(getCurrentBoardPlayer(), dest.destinationTile.row, dest.destinationTile.col);
+    const player = getCurrentBoardPlayer();
+    animatePieceTo(player, dest.destinationTile.row, dest.destinationTile.col);
+    if (typeof emitMoveToServer === "function") {
+        emitMoveToServer(dest.destinationTile.row, dest.destinationTile.col);
+    }
     closeTrapdoorModal();
 }
 
@@ -316,31 +363,6 @@ function updateFinalGuessButton() {
     }
 }
 
-// Patch movement and turn functions to update button
-const originalHandleTileClick = handleTileClick;
-handleTileClick = function(row, col) {
-    originalHandleTileClick.call(this, row, col);
-    updateFinalGuessButton();
-};
-
-const originalStartMovement = startMovement;
-startMovement = function(rollValue) {
-    originalStartMovement.call(this, rollValue);
-    startTurnTimer();
-};
-
-const originalEndTurn = endTurn;
-endTurn = function() {
-    if (!turnTimerDone) return; // Only end turn if timer is done
-    origEndTurn.call(this);
-    if (turnTimerProcess) {
-        turnTimerProcess.kill();
-        turnTimerProcess = null;
-    }
-};
-
-document.addEventListener('DOMContentLoaded', updateFinalGuessButton);
-
 // Movement
 function getAdjacentTiles(row, col) {
     return [
@@ -381,11 +403,15 @@ function showNextValidMoves(player) {
 
 function handleTileClick(row, col) {
     if (!movementInProgress) return;
+    if (typeof isLocalPlayersTurn === "function" && !isLocalPlayersTurn()) return;
     const isValidMove = highlightedMoves.some(t => t.row === row && t.col === col);
     if (!isValidMove) return;
 
     const player = getCurrentBoardPlayer();
     animatePieceTo(player, row, col, 200);
+    if (typeof emitMoveToServer === "function") {
+        emitMoveToServer(row, col);
+    }
     movementPath.push(`${row},${col}`);
     movesLeft--;
     clearHighlights();
@@ -403,6 +429,7 @@ function handleTileClick(row, col) {
 
 function startMovement(rollValue) {
     if (movementInProgress || movesLeft > 0) return;
+    if (typeof isLocalPlayersTurn === "function" && !isLocalPlayersTurn()) return;
     const player = getCurrentBoardPlayer();
     movesLeft = rollValue;
     movementInProgress = true;
@@ -411,11 +438,32 @@ function startMovement(rollValue) {
 }
 
 function endTurn() {
+    if (!turnTimerDone) return;
     clearHighlights();
     movesLeft = 0;
     movementInProgress = false;
     movementPath = [];
-    currentPlayerIndex = (currentPlayerIndex + 1) % playersData.length;
-    // Sync taskbar turn indicator with board turn
-    setPlayerTurn(currentPlayerIndex);
+    if (typeof requestTurnEnd === "function") {
+        requestTurnEnd();
+    } else {
+        currentPlayerIndex = (currentPlayerIndex + 1) % playersData.length;
+        setPlayerTurn(currentPlayerIndex);
+    }
+    stopTurnTimer();
 }
+
+function setBoardTurn(index) {
+    currentPlayerIndex = index % playersData.length;
+    setPlayerTurn(currentPlayerIndex);
+    updateFinalGuessButton();
+    if (typeof isLocalPlayersTurn === "function") {
+        if (isLocalPlayersTurn()) {
+            startTurnTimer();
+        } else {
+            stopTurnTimer();
+            turnTimerDone = false;
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', updateFinalGuessButton);
