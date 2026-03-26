@@ -2,6 +2,8 @@ from flask import Flask, render_template, request, jsonify
 from flask_socketio import SocketIO, join_room, emit
 import random, string, os
 
+import cardShuffle
+
 from session_manager import (
     create_session,
     get_session,
@@ -339,13 +341,25 @@ def handle_start(data):
         p['r'] = pos[0]
         p['c'] = pos[1]
 
-    rooms[room]['turn_index'] = 0
-        
+    num_players = len(rooms[room]['players'])
+    hidden_cards, hands = cardShuffle.deal(num_players)
+    rooms[room]['hidden_cards'] = hidden_cards
+
+    for i, player in enumerate(rooms[room]['players']):
+        player['hand'] = hands[i]
+
+    hidden_cards, hands = cardShuffle.deal(len(rooms[room]['players']))
+    rooms[room]['hidden_cards'] = hidden_cards
+    for i, player in enumerate(rooms[room]['players']):
+        player['hand'] = hands[i]   
+
     socketio.emit('game_starting', room=room)
 
 @socketio.on('join_board')
 def handle_join_board(data):
     room = data.get('room')
+    session_id = data.get('session_id')
+
     if room in rooms:
         join_room(room)
         players = rooms[room]['players']
@@ -356,6 +370,13 @@ def handle_join_board(data):
             turn_index = 0
         emit('board_update', {'players': players}, room=room)
         emit('turn_update', {'turn_index': turn_index}, room=room)
+
+        player = next(
+            (p for p in rooms[room]['players'] if p.get('session_id') == session_id),
+            None
+        )
+        if player and 'hand' in player:
+            emit('deal_hand', {'hand': player['hand']})
 
 @socketio.on('move_player')
 def handle_move(data):

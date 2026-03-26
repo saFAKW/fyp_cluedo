@@ -4,7 +4,8 @@
    Player piece data lives in playersData (board.js).
 ---------------------------------------------------*/
 
-const cards = ["Knife", "Professor Plum", "Library"]; // placeholder — remove when linking!!
+
+let myCards   = [];
 const SERVER_URL = window.location.origin;
 const socket = io(SERVER_URL);
 const queryParams = new URLSearchParams(window.location.search);
@@ -139,10 +140,17 @@ function handleCheckbox(number) {
 function generateCards() {
     const el = document.getElementById('cardsContent');
     el.innerHTML = '';
-    cards.forEach(c => {
+
+    if (myCards.length === 0) {
+        el.innerHTML = '<div class="empty-state">Waiting for cards...</div>';
+        return;
+    }
+
+    myCards.forEach(prefixedCard => {
+        const name = prefixedCard.slice(1); // "WKnife" → "Knife"
         const card = document.createElement('div');
         card.className = 'card-item';
-        card.textContent = c;
+        card.textContent = name;
         el.appendChild(card);
     });
 }
@@ -212,7 +220,7 @@ function replyToLetter() {
     noneEl.onclick = () => selectReplyCard(noneEl);
     container.appendChild(noneEl);
 
-    cards.forEach(cardName => {
+    myCards.forEach(cardName => {
         const el = document.createElement('div');
         el.className = 'reply-card-option';
         el.textContent = cardName;
@@ -380,6 +388,11 @@ function openDiceModal() {
 function closeDiceModal() {
     document.getElementById('diceModal').classList.remove('active');
 }
+
+socket.on('deal_hand', function(data) {
+    myCards = data.hand;
+    generateCards();
+});
 
 /* ── Init ── */
 generateFindings();
