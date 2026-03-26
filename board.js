@@ -136,6 +136,13 @@ for (let r = 0; r < rows; r++) {
     }
 }
 
+rooms.forEach(room => {
+    room.doors.forEach(([dr, dc]) => {
+        const key = `${room.r + dr},${room.c + dc}`;
+        walkableTiles.add(key);
+    });
+});
+
 // Draw rooms
 rooms.forEach(room => {
     room.element = createRect(
@@ -147,7 +154,17 @@ rooms.forEach(room => {
 // Draw doors
 rooms.forEach(room => {
     room.doors.forEach(([dr, dc]) => {
-        createRect(padding + (room.c + dc) * size, padding + (room.r + dr) * size, size, size, "door");
+        const doorRect = createRect(
+            padding + (room.c + dc) * size,
+            padding + (room.r + dr) * size,
+            size, size, "door"
+        );
+        // Allow clicking a door tile to enter the room
+        doorRect.addEventListener("click", () => {
+            const doorRow = room.r + dr;
+            const doorCol = room.c + dc;
+            handleTileClick(doorRow, doorCol);
+        });
     });
 });
 
@@ -342,7 +359,7 @@ sendLetterBtn.addEventListener("mouseleave", () => { hoveringSendButton = false;
 
 rooms.forEach(room => {
     room.element.addEventListener("mouseenter", () => { hoveringRoom = true; });
-    room.element.addEventListener("mousemove", event => {
+    room.element.addEventListener("mouseenter", event => {
         const player = getCurrentBoardPlayer();
         const currentRoom = getRoomAtPosition(player.row, player.col);
         if (currentRoom && currentRoom.name === room.name) showSendLetterButtonAt(event.pageX, event.pageY);

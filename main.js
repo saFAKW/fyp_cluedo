@@ -198,9 +198,9 @@ function addLetter(sender, recipient, suspect, weapon, room) {
     generateLettersRecieved();
 }
 
-function createTestLetter() { // placeholder — remove when linking!!
-    addLetter("Professor Plum", "You", "Miss Scarlet", "Candlestick", "Library");
-}
+//function createTestLetter() { // placeholder — remove when linking!!
+//    addLetter("Professor Plum", "You", "Miss Scarlet", "Candlestick", "Library");
+//}
 
 /* ── Reply ── */
 let selectedReplyCard = undefined;
@@ -220,14 +220,15 @@ function replyToLetter() {
     noneEl.onclick = () => selectReplyCard(noneEl);
     container.appendChild(noneEl);
 
-    myCards.forEach(cardName => {
-        const el = document.createElement('div');
-        el.className = 'reply-card-option';
-        el.textContent = cardName;
-        el.dataset.value = cardName;
-        el.onclick = () => selectReplyCard(el);
-        container.appendChild(el);
-    });
+    myCards.forEach(prefixedCard => {
+    const cardName = prefixedCard.slice(1);  // strip W/R/S prefix
+    const el = document.createElement('div');
+    el.className = 'reply-card-option';
+    el.textContent = cardName;
+    el.dataset.value = cardName;
+    el.onclick = () => selectReplyCard(el);
+    container.appendChild(el);
+});
 
     closeLetterModal();
     document.getElementById('replyModal').classList.add('active');
@@ -246,6 +247,16 @@ function sendReply() {
         setTimeout(() => c.style.outline = '', 800);
         return;
     }
+    const container      = document.getElementById('replyCardsContainer');
+    const senderSession  = container.dataset.senderSession;
+    const responderName  = container.dataset.responderName;
+
+    socket.emit('letter_reply', {
+        room:           roomCode,
+        card_shown:     selectedReplyCard === '__none__' ? null : selectedReplyCard,
+        sender_session: senderSession,
+        responder_name: responderName
+    });
     closeReplyModal();
 }
 
@@ -275,7 +286,14 @@ function submitSendLetter() {
         document.getElementById('sendLetterError').textContent = 'Please select a suspect, weapon, and room.';
         return;
     }
-    addLetter('You', 'All Players', suspect, weapon, room);
+    // Emit to server instead of handling locally
+    socket.emit('send_letter', {
+        room:       roomCode,
+        session_id: sessionId,
+        suspect:    suspect,
+        weapon:     weapon,
+        room_name:  room
+    });
     closeSendLetterModal();
 }
 
@@ -397,7 +415,7 @@ socket.on('deal_hand', function(data) {
 /* ── Init ── */
 generateFindings();
 generateCards();
-createTestLetter(); // placeholder — remove when linking!!
+//createTestLetter(); // placeholder — remove when linking!!
 renderTaskbarPlayers();
 startTimer();
 
@@ -455,6 +473,49 @@ socket.on('dice_rolled', (data) => {
 
 socket.on('error_msg', (data) => {
     alert(data.msg);
+});
+
+// Server is asking YOU to respond to someone else's suggestion
+socket.on('letter_request', function(data) {
+    // data: { from_name, suspect, weapon, room, your_matching_cards, sender_session }
+    const container = document.getElementById('replyCardsContainer');
+    container.innerHTML = '';
+    document.getElementById('replyModalTitle').textContent = `Reply to ${data.from_name}`;
+
+    // Store sender session so we can send it back with the reply
+    container.dataset.senderSession  = data.sender_session;
+    container.dataset.responderName  = // your own name
+        (playersData[localPlayerIndex] || {}).name || 'Unknown';
+
+    selectedReplyCard = undefined;
+
+    // Only show cards that actually match — the server already filtered these
+    data.your_matching_cards.forEach(cardName => {
+        const el         = document.createElement('div');
+        el.className     = 'reply-card-option';
+        el.textContent   = cardName;
+        el.dataset.value = cardName;
+        el.onclick       = () => selectReplyCard(el);
+        container.appendChild(el);
+    });
+
+    document.getElementById('replyModal').classList.add('active');
+});
+
+// Server is telling YOU (the sender) what the result was
+socket.on('letter_result', function(data) {
+    // data: { responder_name, card_shown, nobody_disproved }
+    let bodyHtml;
+    if (data.nobody_disproved) {
+        bodyHtml = '<p>Nobody could disprove your suggestion.</p>';
+    } else {
+        bodyHtml = `<p><strong>${data.responder_name}</strong> showed you: <strong>${data.card_shown || 'no card'}</strong></p>`;
+    }
+    document.getElementById('modalTitle').textContent = 'Letter Result';
+    document.getElementById('modalBody').innerHTML    = bodyHtml;
+    // Hide the Reply button — this is a results view
+    document.querySelector('#letterModal .modal-button.primary').style.display = 'none';
+    document.getElementById('letterModal').classList.add('active');
 });
 
 if (sessionId) {

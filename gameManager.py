@@ -27,26 +27,32 @@ class gameManager:
         if len(activePlayers) == 1:
             self.playerWins(activePlayers[0])
     
-    def handleSuggestion(self, suggestingPlayer, weapon, suspect, askedPlayer):
-        room = suggestingPlayer.inRoom
-        suggestion = (weapon, room, suspect)
-        
-        # Get players in order starting after the player being asked
-        idx = self.players.index(askedPlayer)
-        orderedPlayers = self.players[idx+1:] + self.players[:idx]
-        
-        for player in orderedPlayers:
+    def handleSuggestion(self, suggesting_session_id, suspect, weapon, room_name):
+        # Find the suggesting player object
+        suggesting_player = next(
+            (p for p in self.players if p.playerID == suggesting_session_id), None
+        )
+        if not suggesting_player:
+            return None, []
+
+        # Cards are stored with R/W/S prefix, so build prefixed versions to check
+        suggestion_cards = [f"S{suspect}", f"W{weapon}", f"R{room_name}"]
+
+        # Get all other players in order starting from the one after the suggester
+        idx = self.players.index(suggesting_player)
+        ordered = self.players[idx+1:] + self.players[:idx]
+
+        for player in ordered:
             if not player.stillInGame:
                 continue
-            if player == suggestingPlayer:
-                continue  # Skip the suggesting player
-            matchingCards = [c for c in suggestion if c in player.hand]
-            if matchingCards:
-                # Return to frontend: who refuted and what cards they *could* show
-                # The suggesting player picks which card to see (or it's random)
-                return player, matchingCards
-        
-        return None, []  # Nobody could answer
+            if player == suggesting_player:
+                continue
+            # Check which of the suggested cards this player holds
+            matching = [card[1:] for card in suggestion_cards if card in player.hand]
+            if matching:
+                return player, matching
+
+        return None, []  # Nobody could disprove it
 
     def playerWins(self, player):
         print(f"{player.name} wins the game!")

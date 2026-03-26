@@ -3,6 +3,8 @@ from flask_socketio import SocketIO, join_room, emit
 import random, string, os
 
 import cardShuffle
+from playerClass import Player
+game_managers = {} 
 
 from session_manager import (
     create_session,
@@ -351,7 +353,29 @@ def handle_start(data):
     hidden_cards, hands = cardShuffle.deal(len(rooms[room]['players']))
     rooms[room]['hidden_cards'] = hidden_cards
     for i, player in enumerate(rooms[room]['players']):
-        player['hand'] = hands[i]   
+        player['hand'] = hands[i] 
+
+    from gameManager import gameManager as GameManager
+
+    gm = GameManager.__new__(GameManager)
+    gm.gameID = room
+    gm.hidden_cards = hidden_cards
+    gm.players = []
+    for i, p in enumerate(rooms[room]['players']):
+        player = Player(
+            name=p['name'],
+            character=p['character'],
+            location=(p['r'], p['c']),
+            hand=hands[i],
+            isTurn=(i == 0),
+            inRoom=None,
+            playerID=p['session_id'],
+            gameID=room,
+            gameManager=gm
+        )
+        gm.players.append(player)
+
+    game_managers[room] = gm
 
     socketio.emit('game_starting', room=room)
 
@@ -442,6 +466,67 @@ def handle_end_turn(data):
 
     room_data['turn_index'] = (turn_index + 1) % len(players)
     socketio.emit('turn_update', {'turn_index': room_data['turn_index']}, room=room)
+
+
+@socketio.on('send_letter')
+def handle_send_letter(data):
+    room       = data.get('room')
+    session_id = data.get('session_id')
+    suspect    = data.get('suspect')
+    weapon     = data.get('weapon')
+    room_name  = data.get('room_name')
+
+    if room not in rooms or room not in game_managers:
+        return
+
+    gm = game_managers[room]
+    responder, matching_cards = gm.handleSuggestion(session_id, suspect, weapon, room_name)
+
+    if responder is None:
+        # Nobody could disprove it — tell the sender directly
+        emit('letter_result', {
+            'suspect': suspect,
+            'weapon': weapon,
+            'room': room_name,
+            'responder_name': None,
+            'card_shown': None,
+            'nobody_disproved': True
+        })
+    else:
+        # Ask the responder privately to pick a card
+        responder_sid = next(
+            (sid for sid, sess_id in sid_to_session.items() if sess_id == responder.playerID),
+            None
+        )
+        if responder_sid:
+            socketio.emit('letter_request', {
+                'from_name': next(p['name'] for p in rooms[room]['players'] if p['session_id'] == session_id),
+                'suspect': suspect,
+                'weapon': weapon,
+                'room': room_name,
+                'your_matching_cards': matching_cards,
+                'sender_session': session_id
+            }, to=responder_sid)
+
+
+@socketio.on('letter_reply')
+def handle_letter_reply(data):
+    room           = data.get('room')
+    card_shown     = data.get('card_shown')    # plain card name or None
+    sender_session = data.get('sender_session')
+    responder_name = data.get('responder_name')
+
+    # Send the result privately back to the original sender
+    sender_sid = next(
+        (sid for sid, sess_id in sid_to_session.items() if sess_id == sender_session),
+        None
+    )
+    if sender_sid:
+        socketio.emit('letter_result', {
+            'responder_name': responder_name,
+            'card_shown': card_shown,
+            'nobody_disproved': False
+        }, to=sender_sid)
 
 @socketio.on('disconnect')
 def handle_disconnect():
