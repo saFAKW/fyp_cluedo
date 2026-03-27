@@ -29,6 +29,50 @@ let movesLeft = 0;
 let movementInProgress = false;
 let movementPath = [];
 
+/* ════════════════════════════════════════
+   SOUND SYSTEM
+════════════════════════════════════════ */
+
+const SFX = {
+    boom:      new Audio("sound effects/freesound_community-cinematic-boom-6872.mp3"),
+    whoosh:    new Audio("sound effects/dragon-studio-simple-whoosh-382724.mp3"),
+    pencil:    new Audio("sound effects/u_viypcpsnud-pencil_scribble_9-389258.mp3"),
+    levelUp:   new Audio("sound effects/universfield-game-level-complete-143022.mp3"),
+    doorOpen:  new Audio("sound effects/dragon-studio-open-door-stock-sfx-454246.mp3"),
+    doorClose: new Audio("sound effects/soundreality-opening-door-411632.mp3"),
+    footsteps: new Audio("sound effects/freesound_community-steps-in-high-heels-6332.mp3"),
+    paper:     new Audio("sound effects/makigai_maimai-paper-245786.mp3"),
+    dice:      new Audio("sound effects/freesound_community-rolling-dice-2-102706.mp3"),
+};
+
+// Footsteps loop while moving
+SFX.footsteps.loop = true;
+
+function playSound(sfx) {
+    try {
+        sfx.currentTime = 0;
+        sfx.play().catch(() => {});
+    } catch (e) {}
+}
+
+function stopSound(sfx) {
+    try {
+        sfx.pause();
+        sfx.currentTime = 0;
+    } catch (e) {}
+}
+
+// Exposed globally so board.html inline handlers and other scripts can call them
+function playResultSound()     { playSound(SFX.boom); }
+function playPaperSound()      { playSound(SFX.paper); }
+function playSendLetterSound() { playSound(SFX.whoosh); }
+function playPencilSound()     { playSound(SFX.pencil); }
+function playDiceSound()       { playSound(SFX.dice); }
+
+/* ════════════════════════════════════════
+   BOARD DATA
+════════════════════════════════════════ */
+
 const rooms = [
     { name: "Kitchen",       r: 0,  c: 0,  w: 6, h: 6, doors: [[5,1],[2,5]],  isCorner: true,  trapdoor: { row: 1,  col: 1  }, destinationTile: { row: 2,  col: 2  } },
     { name: "Ballroom",      r: 0,  c: 9,  w: 7, h: 6, doors: [[5,3]] },
@@ -136,13 +180,6 @@ for (let r = 0; r < rows; r++) {
     }
 }
 
-rooms.forEach(room => {
-    room.doors.forEach(([dr, dc]) => {
-        const key = `${room.r + dr},${room.c + dc}`;
-        walkableTiles.add(key);
-    });
-});
-
 // Draw rooms
 rooms.forEach(room => {
     room.element = createRect(
@@ -154,17 +191,7 @@ rooms.forEach(room => {
 // Draw doors
 rooms.forEach(room => {
     room.doors.forEach(([dr, dc]) => {
-        const doorRect = createRect(
-            padding + (room.c + dc) * size,
-            padding + (room.r + dr) * size,
-            size, size, "door"
-        );
-        // Allow clicking a door tile to enter the room
-        doorRect.addEventListener("click", () => {
-            const doorRow = room.r + dr;
-            const doorCol = room.c + dc;
-            handleTileClick(doorRow, doorCol);
-        });
+        createRect(padding + (room.c + dc) * size, padding + (room.r + dr) * size, size, size, "door");
     });
 });
 
@@ -241,6 +268,19 @@ function clearHighlights() {
     highlightedMoves = [];
 }
 
+/* ── Room entry/exit detection ── */
+function checkRoomTransition(player, newRow, newCol) {
+    const prevRoom = getRoomAtPosition(player.row, player.col);
+    const nextRoom = getRoomAtPosition(newRow, newCol);
+    if (prevRoom && !nextRoom) {
+        // Leaving a room — door closing behind
+        playSound(SFX.doorClose);
+    } else if (!prevRoom && nextRoom) {
+        // Entering a room
+        playSound(SFX.doorOpen);
+    }
+}
+
 function animatePieceTo(player, newRow, newCol, duration = 300) {
     const startX = parseFloat(player.piece.getAttribute("cx"));
     const startY = parseFloat(player.piece.getAttribute("cy"));
@@ -269,6 +309,9 @@ const clueTiles = [
     { row: 16, col: 18 },
     { row: 18, col: 10 }
 ];
+
+// Fast lookup set for clue tile positions
+const clueTileSet = new Set(clueTiles.map(t => `${t.row},${t.col}`));
 
 clueTiles.forEach(({ row, col }) => {
     const center = getTileCenter(row, col);
@@ -317,6 +360,7 @@ function openTrapdoorModal(currentRoom) {
         option.textContent = room.name;
         select.appendChild(option);
     });
+    playPaperSound();
     document.getElementById("trapdoorModal").classList.add("active");
 }
 
@@ -331,6 +375,9 @@ function confirmTrapdoorMove() {
     const dest = rooms.find(r => r.name === chosenRoomName);
     if (!dest) return;
     const player = getCurrentBoardPlayer();
+    // Trapdoor is room-to-room: door closing then opening
+    playSound(SFX.doorClose);
+    setTimeout(() => playSound(SFX.doorOpen), 500);
     animatePieceTo(player, dest.destinationTile.row, dest.destinationTile.col);
     if (typeof emitMoveToServer === "function") {
         emitMoveToServer(dest.destinationTile.row, dest.destinationTile.col);
@@ -357,26 +404,19 @@ function scheduleHideSendLetterButton() {
 sendLetterBtn.addEventListener("mouseenter", () => { hoveringSendButton = true;  clearTimeout(hideLetterButtonTimeout); });
 sendLetterBtn.addEventListener("mouseleave", () => { hoveringSendButton = false; scheduleHideSendLetterButton(); });
 
+// Whoosh on clicking the Send Letter button
+sendLetterBtn.addEventListener("click", () => {
+    playSound(SFX.whoosh);
+}, true); // capture phase so it fires before openSendLetterModal
+
 rooms.forEach(room => {
-    room.element.addEventListener("mouseenter", event => {
-        hoveringRoom = true;
-
-        // Check the LOCAL player's position, not the current turn player
-        const localPlayer = playersData[localPlayerIndex];
-        if (!localPlayer) return;
-
-        const currentRoom = getRoomAtPosition(localPlayer.row, localPlayer.col);
-        if (currentRoom && currentRoom.name === room.name) {
-            const rect = room.element.getBoundingClientRect();
-            sendLetterBtn.style.display = "block";
-            sendLetterBtn.style.left = `${rect.right + window.scrollX + 6}px`;
-            sendLetterBtn.style.top  = `${rect.top  + window.scrollY + 6}px`;
-        }
+    room.element.addEventListener("mouseenter", () => { hoveringRoom = true; });
+    room.element.addEventListener("mousemove", event => {
+        const player = getCurrentBoardPlayer();
+        const currentRoom = getRoomAtPosition(player.row, player.col);
+        if (currentRoom && currentRoom.name === room.name) showSendLetterButtonAt(event.pageX, event.pageY);
     });
-    room.element.addEventListener("mouseleave", () => {
-        hoveringRoom = false;
-        scheduleHideSendLetterButton();
-    });
+    room.element.addEventListener("mouseleave", () => { hoveringRoom = false; scheduleHideSendLetterButton(); });
 });
 
 // Final Guess Button logic
@@ -437,6 +477,10 @@ function handleTileClick(row, col) {
     if (!isValidMove) return;
 
     const player = getCurrentBoardPlayer();
+
+    // Check for room entry / exit and play door sounds
+    checkRoomTransition(player, row, col);
+
     animatePieceTo(player, row, col, 200);
     if (typeof emitMoveToServer === "function") {
         emitMoveToServer(row, col);
@@ -445,10 +489,23 @@ function handleTileClick(row, col) {
     movesLeft--;
     clearHighlights();
 
+    // Landing on a clue tile plays the level-up fanfare
+    if (clueTileSet.has(`${row},${col}`)) {
+        stopSound(SFX.footsteps);
+        playSound(SFX.levelUp);
+        // Resume footsteps after the fanfare if moves remain
+        if (movesLeft > 0) {
+            SFX.levelUp.addEventListener("ended", () => {
+                if (movementInProgress) playSound(SFX.footsteps);
+            }, { once: true });
+        }
+    }
+
     setTimeout(() => {
         if (movesLeft > 0) {
             showNextValidMoves(player);
         } else {
+            stopSound(SFX.footsteps);
             movementInProgress = false;
             movementPath = [];
             endTurn();
@@ -463,11 +520,13 @@ function startMovement(rollValue) {
     movesLeft = rollValue;
     movementInProgress = true;
     movementPath = [`${player.row},${player.col}`];
+    playSound(SFX.footsteps);
     showNextValidMoves(player);
 }
 
 function endTurn() {
     if (!turnTimerDone) return;
+    stopSound(SFX.footsteps);
     clearHighlights();
     movesLeft = 0;
     movementInProgress = false;

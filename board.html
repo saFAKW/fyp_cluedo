@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhoDunnit</title>
+    <title>WhoDunnit?</title>
     <link rel="stylesheet" href="board.css">
 </head>
 <body>
@@ -19,9 +19,9 @@
     <svg id="board"></svg>
 
     <!-- Tab Buttons -->
-    <div class="tab-left"   onclick="togglePanel('left')">INBOX</div>
-    <div class="tab-right"  onclick="togglePanel('right')">FINDINGS</div>
-    <div class="tab-bottom" onclick="togglePanel('bottom')">CARDS</div>
+    <div class="tab-left"   onclick="togglePanel('left')">Inbox</div>
+    <div class="tab-right"  onclick="togglePanel('right')">Findings</div>
+    <div class="tab-bottom" onclick="togglePanel('bottom')">Cards</div>
 
     <!-- Left Panel – Inbox -->
     <div class="panel-left" id="panelLeft">
@@ -44,33 +44,36 @@
     </div>
 
     <!-- Send Letter Button (shown on room hover by board.js) -->
+    <!-- Whoosh sound is attached in board.js via addEventListener -->
     <div class="send-letter-btn" onclick="openSendLetterModal()">
         <span>✉ Send Letter</span>
     </div>
 
     <!-- Final Guess Button -->
-    <div class="final-guess-btn" onclick="openFinalGuessModal()">
+    <!-- Paper sound plays when this modal opens -->
+    <div class="final-guess-btn" onclick="playPaperSound(); openFinalGuessModal()">
         <span>🔍 Final Guess</span>
     </div>
 
     <!-- ── MODALS ── -->
 
-    <!-- Reply Modal -->
+    <!-- Reply Modal — paper sound on open, pencil on card selection (wired in JS below) -->
     <div class="modal-overlay" id="replyModal">
         <div class="modal-content">
             <div class="modal-header" id="replyModalTitle">Reply</div>
             <div class="modal-body">
-                <p style="margin-bottom:14px; font-size:14px;">Choose a card from your hand to send, or send no card:</p>
+                <p style="margin-bottom:14px; font-size:14px; font-style:italic;">Choose a card from your hand to send, or send no card:</p>
                 <div id="replyCardsContainer" style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px;"></div>
             </div>
             <div class="modal-buttons">
                 <button class="modal-button" onclick="closeReplyModal()">Cancel</button>
-                <button class="modal-button primary" onclick="sendReply()">Send</button>
+                <!-- Pencil sound on confirming a reply send -->
+                <button class="modal-button primary" onclick="playPencilSound(); sendReply()">Send</button>
             </div>
         </div>
     </div>
 
-    <!-- Letter Modal -->
+    <!-- Letter Modal — paper sound triggered via openLetterModal() wrapper below -->
     <div class="modal-overlay" id="letterModal">
         <div class="modal-content">
             <div class="modal-header" id="modalTitle">Letter</div>
@@ -82,7 +85,7 @@
         </div>
     </div>
 
-    <!-- Send Letter Modal -->
+    <!-- Send Letter Modal — paper sound on open -->
     <div class="modal-overlay" id="sendLetterModal">
         <div class="modal-content">
             <div class="modal-header">Send a Letter</div>
@@ -126,21 +129,22 @@
                         <option>Billiard Room</option>
                     </select>
                 </div>
-                <p id="sendLetterError" style="color:red; font-size:13px; min-height:18px; margin-top:4px;"></p>
+                <p id="sendLetterError" style="color:#B0413E; font-family:'EB Garamond',serif; font-size:13px; font-style:italic; min-height:18px; margin-top:4px;"></p>
             </div>
             <div class="modal-buttons">
                 <button class="modal-button" onclick="closeSendLetterModal()">Cancel</button>
-                <button class="modal-button primary" onclick="submitSendLetter()">Send</button>
+                <!-- Pencil sound when the letter is actually submitted -->
+                <button class="modal-button primary" onclick="playPencilSound(); submitSendLetter()">Send</button>
             </div>
         </div>
     </div>
 
-    <!-- Final Guess Modal -->
+    <!-- Final Guess Modal — paper sound on open (handled by Final Guess button above) -->
     <div class="modal-overlay" id="finalGuessModal">
         <div class="modal-content">
             <div class="modal-header">Make Your Final Accusation</div>
             <div class="modal-body">
-                <p style="margin-bottom:14px; font-size:13px; color:#c00; font-weight:bold;">⚠ This is your final guess — choose carefully!</p>
+                <p style="margin-bottom:14px; font-size:14px; font-style:italic; color:#B0413E; font-family:'EB Garamond',serif;">⚠ This is your final guess — choose carefully!</p>
                 <div class="send-field">
                     <label for="guessSuspect">Suspect</label>
                     <select id="guessSuspect" class="send-select">
@@ -180,7 +184,7 @@
                         <option>Billiard Room</option>
                     </select>
                 </div>
-                <p id="finalGuessError" style="color:red; font-size:13px; min-height:18px; margin-top:4px;"></p>
+                <p id="finalGuessError" style="color:#B0413E; font-family:'EB Garamond',serif; font-size:13px; font-style:italic; min-height:18px; margin-top:4px;"></p>
             </div>
             <div class="modal-buttons">
                 <button class="modal-button" onclick="closeFinalGuessModal()">Cancel</button>
@@ -189,12 +193,12 @@
         </div>
     </div>
 
-    <!-- Trapdoor Modal -->
+    <!-- Trapdoor Modal — paper sound handled in board.js openTrapdoorModal() -->
     <div id="trapdoorModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">Choose a Trapdoor Destination</div>
             <div class="modal-body">
-                <label for="trapdoorSelect">Corner room</label>
+                <label style="font-family:'EB Garamond',serif; font-size:13px; font-weight:600; letter-spacing:0.15em; text-transform:uppercase; color:#9a8878; display:block; margin-bottom:6px;" for="trapdoorSelect">Corner Room</label>
                 <select id="trapdoorSelect" class="send-select"></select>
             </div>
             <div class="modal-buttons">
@@ -204,22 +208,22 @@
         </div>
     </div>
 
-    <!-- Dice Roll Modal -->
+    <!-- Dice Roll Modal — dice sound triggered in rollDice() wrapper below -->
     <div id="diceModal">
         <div class="dice-modal-content">
             <div class="dice-modal-header">Roll the Dice</div>
             <div class="dice-face" id="diceFace"></div>
             <div class="dice-result" id="diceResult"></div>
-            <button class="dice-roll-btn" id="diceRollBtn" onclick="rollDice()">Roll</button>
+            <button class="dice-roll-btn" id="diceRollBtn" onclick="handleDiceRoll()">Roll</button>
         </div>
     </div>
 
-    <!-- Win / Lose Modal -->
+    <!-- Win / Lose Modal — boom sound triggered when this becomes active -->
     <div class="modal-overlay" id="resultModal">
         <div class="modal-content" style="text-align:center;">
             <div class="modal-header" id="resultTitle" style="justify-content:center;"></div>
             <div class="modal-body" style="padding: 20px 0;">
-                <p id="resultMessage" style="font-size:15px; line-height:1.6;"></p>
+                <p id="resultMessage" style="font-size:16px; line-height:1.7; font-style:italic;"></p>
             </div>
             <div class="modal-buttons" style="justify-content:center;">
                 <button class="modal-button primary" onclick="closeResultModal()">Close</button>
@@ -231,6 +235,79 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <script src="board.js"></script>
     <script src="main.js"></script>
+
+    <script>
+    /* ── Sound hooks that need to wrap existing game functions ── */
+
+    // Wrap openLetterModal (called when player clicks a letter in their inbox)
+    // to play the paper sound before showing the modal.
+    const _origOpenLetterModal = window.openLetterModal;
+    if (typeof _origOpenLetterModal === 'function') {
+        window.openLetterModal = function(...args) {
+            playPaperSound();
+            return _origOpenLetterModal.apply(this, args);
+        };
+    }
+
+    // Wrap openSendLetterModal to play paper sound when the modal opens
+    // (whoosh is already played on the button click in board.js)
+    const _origOpenSendLetterModal = window.openSendLetterModal;
+    if (typeof _origOpenSendLetterModal === 'function') {
+        window.openSendLetterModal = function(...args) {
+            playPaperSound();
+            return _origOpenSendLetterModal.apply(this, args);
+        };
+    }
+
+    // Wrap showResultModal (or openResultModal) to play cinematic boom
+    const _origShowResultModal = window.showResultModal;
+    if (typeof _origShowResultModal === 'function') {
+        window.showResultModal = function(...args) {
+            playResultSound();
+            return _origShowResultModal.apply(this, args);
+        };
+    }
+
+    // Fallback: watch the resultModal overlay for the 'active' class via MutationObserver
+    // This catches cases where the modal is shown by toggling the class directly.
+    (function() {
+        const resultModal = document.getElementById('resultModal');
+        if (!resultModal) return;
+        let wasActive = false;
+        const observer = new MutationObserver(() => {
+            const isActive = resultModal.classList.contains('active');
+            if (isActive && !wasActive) {
+                playResultSound();
+            }
+            wasActive = isActive;
+        });
+        observer.observe(resultModal, { attributes: true, attributeFilter: ['class'] });
+    })();
+
+    // Dice roll wrapper — plays dice sound then calls the real rollDice()
+    function handleDiceRoll() {
+        playDiceSound();
+        if (typeof rollDice === 'function') rollDice();
+    }
+
+    // Reply card selection — play pencil sound when a card option is clicked.
+    // Uses event delegation on the container since cards are rendered dynamically.
+    document.addEventListener('click', function(e) {
+        const card = e.target.closest('.reply-card-option, .reply-card-none');
+        if (card) {
+            playPencilSound();
+        }
+    });
+
+    // Inbox letter clicks — play paper sound when a letter item is opened.
+    // Uses event delegation since inbox items are rendered dynamically.
+    document.addEventListener('click', function(e) {
+        const letter = e.target.closest('.letter-item');
+        if (letter) {
+            playPaperSound();
+        }
+    });
+    </script>
 
 </body>
 </html>
