@@ -21,7 +21,7 @@ html { height: 100%; }
 
 body {
     font-family: 'EB Garamond', serif;
-    background: #d9d9d9;
+    background: #1a1008;
     height: 100vh;
     display: flex;
     justify-content: center;
@@ -29,20 +29,90 @@ body {
     overflow: hidden;
 }
 
-svg {
-    background: #d9d9d9;
+/* ── Weapon Rocking Background ── */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: #1a1008;
+    z-index: 0;
 }
 
-/* ── Board tile classes — DO NOT CHANGE ── */
-.tile        { fill: #d3d3d3; stroke: #9f9f9f; stroke-width: 1; }
+.weapon-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    overflow: hidden;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: stretch;
+    padding: 20px 0;
+}
+
+.weapon-row {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    flex: 1;
+}
+
+.weapon-row svg {
+    width: 90px;
+    height: 90px;
+    opacity: 0.07;
+    filter: sepia(1) brightness(1.2);
+    transform-origin: center center;
+}
+
+/* Forward rows: rock clockwise first */
+.weapon-row.forward svg:nth-child(odd)  { animation: rockFwd  4s ease-in-out infinite; }
+.weapon-row.forward svg:nth-child(even) { animation: rockFwd  4s ease-in-out infinite 2s; }
+
+/* Reverse rows: rock counter-clockwise first */
+.weapon-row.reverse svg:nth-child(odd)  { animation: rockRev  4s ease-in-out infinite; }
+.weapon-row.reverse svg:nth-child(even) { animation: rockRev  4s ease-in-out infinite 2s; }
+
+@keyframes rockFwd {
+    0%   { transform: rotate(0deg); }
+    25%  { transform: rotate(45deg); }
+    75%  { transform: rotate(-45deg); }
+    100% { transform: rotate(0deg); }
+}
+
+@keyframes rockRev {
+    0%   { transform: rotate(0deg); }
+    25%  { transform: rotate(-45deg); }
+    75%  { transform: rotate(45deg); }
+    100% { transform: rotate(0deg); }
+}
+
+/* Board sits above carousel */
+svg#board {
+    position: relative;
+    z-index: 2;
+}
+
+/* ── Checkerboard tiles ── */
+/* Even tiles (r+c even) → white-ish, odd → near-black */
+/* We use a CSS pattern trick via SVG defs injected by board.js */
+/* The .tile class gets per-cell colour via nth approach — 
+   we instead define two classes and JS sets them */
+
+.tile        { stroke: rgba(0,0,0,0.18); stroke-width: 0.8; }
+.tile.dark   { fill: #1c1c1c; }
+.tile.light  { fill: #f0ece2; }
+
+/* valid move stays bright over either checker */
+.tile.valid-move       { fill: #78d878 !important; }
+.tile.valid-move:hover { fill: #4ec84e !important; cursor: pointer; }
+.tile.clue-tile        { fill: #ffd6d6; }
+
 .room        { fill: #d8c9a3; stroke: black; stroke-width: 2; }
 .door        { fill: #9c672d; }
 .start       { stroke: #666; stroke-width: 1; }
-.board-outline { fill: none; stroke: black; stroke-width: 3; }
-
-.tile.valid-move       { fill: #b7efb7; }
-.tile.valid-move:hover { fill: #8dde8d; cursor: pointer; }
-.tile.clue-tile        { fill: #ffd6d6; }
+.board-outline { fill: none; stroke: #3e2e1a; stroke-width: 3; }
 
 .trapdoor       { fill: #444; stroke: #111; stroke-width: 1.5; }
 .trapdoor:hover { fill: #666; cursor: pointer; }

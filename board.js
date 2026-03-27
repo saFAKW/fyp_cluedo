@@ -78,7 +78,7 @@ const rooms = [
     { name: "Ballroom",      r: 0,  c: 9,  w: 7, h: 6, doors: [[5,3]] },
     { name: "Conservatory",  r: 0,  c: 19, w: 6, h: 6, doors: [[5,3],[2,0]],  isCorner: true,  trapdoor: { row: 1,  col: 23 }, destinationTile: { row: 2,  col: 22 } },
     { name: "Dining Room",   r: 9,  c: 0,  w: 6, h: 7, doors: [[3,5]] },
-    { name: "Center",        r: 9,  c: 9,  w: 7, h: 7, doors: [[0,3]] },
+    { name: "Cellar",        r: 9,  c: 9,  w: 7, h: 7, doors: [], isCellar: true },
     { name: "Billiard Room", r: 9,  c: 18, w: 7, h: 7, doors: [[3,0]] },
     { name: "Lounge",        r: 19, c: 0,  w: 6, h: 6, doors: [[0,1],[3,5]],  isCorner: true,  trapdoor: { row: 23, col: 1  }, destinationTile: { row: 22, col: 2  } },
     { name: "Hall",          r: 19, c: 9,  w: 7, h: 6, doors: [[0,3]] },
@@ -167,11 +167,12 @@ function inAnyRoom(r, c) {
     );
 }
 
-// Draw corridor tiles
+// Draw corridor tiles — checkerboard pattern
 for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
         if (!inAnyRoom(r, c)) {
-            const tile = createRect(padding + c * size, padding + r * size, size, size, "tile");
+            const checkerClass = (r + c) % 2 === 0 ? "tile light" : "tile dark";
+            const tile = createRect(padding + c * size, padding + r * size, size, size, checkerClass);
             const key = `${r},${c}`;
             tileMap.set(key, tile);
             walkableTiles.add(key);
@@ -180,12 +181,22 @@ for (let r = 0; r < rows; r++) {
     }
 }
 
-// Draw rooms
+// Draw rooms using PNG images
 rooms.forEach(room => {
-    room.element = createRect(
-        padding + room.c * size, padding + room.r * size,
-        room.w * size, room.h * size, "room"
-    );
+    if (room.name === "Center") return; // skip old center if present
+    // Map room names to image filenames
+    let imgName = room.name.toLowerCase().replace(/ /g, "_") + ".png";
+    // Special case for library (handle possible duplicate/variant)
+    if (room.name === "Library") imgName = "library.png";
+    const img = document.createElementNS(ns, "image");
+    img.setAttribute("href", `rooms/${imgName}`);
+    img.setAttribute("x", padding + room.c * size);
+    img.setAttribute("y", padding + room.r * size);
+    img.setAttribute("width", room.w * size);
+    img.setAttribute("height", room.h * size);
+    img.setAttribute("class", "room-img");
+    svg.appendChild(img);
+    room.element = img;
 });
 
 // Draw doors
