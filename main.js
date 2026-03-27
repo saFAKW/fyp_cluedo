@@ -271,6 +271,18 @@ function openSendLetterModal() {
     document.getElementById('selectWeapon').value  = '';
     document.getElementById('sendLetterError').textContent = '';
 
+    // Populate recipient dropdown with all other players in the game
+    const recipientSelect = document.getElementById('selectRecipient');
+    recipientSelect.innerHTML = '<option value="">— Choose a recipient —</option>';
+    playersData.forEach((p, i) => {
+        if (i === localPlayerIndex) return; // exclude yourself
+        const opt = document.createElement('option');
+        opt.value = p.name;
+        opt.textContent = p.name;
+        recipientSelect.appendChild(opt);
+    });
+    recipientSelect.value = '';
+
     // Restrict room selection if player is in a room (not corridor)
     let player = null;
     if (typeof getCurrentBoardPlayer === 'function') {
@@ -311,17 +323,19 @@ function closeSendLetterModal() {
 }
 
 function submitSendLetter() {
-    const suspect = document.getElementById('selectSuspect').value;
-    const weapon  = document.getElementById('selectWeapon').value;
-    const room    = document.getElementById('selectRoom').value;
-    if (!suspect || !weapon || !room) {
-        document.getElementById('sendLetterError').textContent = 'Please select a suspect, weapon, and room.';
+    const recipient = document.getElementById('selectRecipient').value;
+    const suspect   = document.getElementById('selectSuspect').value;
+    const weapon    = document.getElementById('selectWeapon').value;
+    const room      = document.getElementById('selectRoom').value;
+    if (!recipient || !suspect || !weapon || !room) {
+        document.getElementById('sendLetterError').textContent = 'Please select a recipient, suspect, weapon, and room.';
         return;
     }
     // Emit to server instead of handling locally
     socket.emit('send_letter', {
         room:       roomCode,
         session_id: sessionId,
+        recipient:  recipient,
         suspect:    suspect,
         weapon:     weapon,
         room_name:  room
