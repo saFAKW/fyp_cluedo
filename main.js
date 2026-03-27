@@ -5,7 +5,7 @@
 ---------------------------------------------------*/
 
 
-let myCards   = [];
+let myCards = [];
 const SERVER_URL = window.location.origin;
 const socket = io(SERVER_URL);
 const queryParams = new URLSearchParams(window.location.search);
@@ -98,7 +98,13 @@ function setLocalPlayerIndexFromServerPlayers(serverPlayers) {
 
 function leaveGame() {
     if (confirm('Are you sure you want to leave the game?')) {
-        window.location.href = 'menu.html';
+        if (roomCode && sessionId) {
+            socket.emit('leave_game', { room: roomCode, session_id: sessionId });
+        }
+        // Fallback in case the server response is delayed
+        setTimeout(() => {
+            window.location.href = 'menu.html';
+        }, 300);
     }
 }
 
@@ -221,14 +227,14 @@ function replyToLetter() {
     container.appendChild(noneEl);
 
     myCards.forEach(prefixedCard => {
-    const cardName = prefixedCard.slice(1);  // strip W/R/S prefix
-    const el = document.createElement('div');
-    el.className = 'reply-card-option';
-    el.textContent = cardName;
-    el.dataset.value = cardName;
-    el.onclick = () => selectReplyCard(el);
-    container.appendChild(el);
-});
+        const cardName = prefixedCard.slice(1);  // strip W/R/S prefix
+        const el = document.createElement('div');
+        el.className = 'reply-card-option';
+        el.textContent = cardName;
+        el.dataset.value = cardName;
+        el.onclick = () => selectReplyCard(el);
+        container.appendChild(el);
+    });
 
     closeLetterModal();
     document.getElementById('replyModal').classList.add('active');
@@ -247,13 +253,13 @@ function sendReply() {
         setTimeout(() => c.style.outline = '', 800);
         return;
     }
-    const container      = document.getElementById('replyCardsContainer');
-    const senderSession  = container.dataset.senderSession;
-    const responderName  = container.dataset.responderName;
+    const container = document.getElementById('replyCardsContainer');
+    const senderSession = container.dataset.senderSession;
+    const responderName = container.dataset.responderName;
 
     socket.emit('letter_reply', {
-        room:           roomCode,
-        card_shown:     selectedReplyCard === '__none__' ? null : selectedReplyCard,
+        room: roomCode,
+        card_shown: selectedReplyCard === '__none__' ? null : selectedReplyCard,
         sender_session: senderSession,
         responder_name: responderName
     });
@@ -268,8 +274,8 @@ function closeReplyModal() {
 /* ── Send Letter Modal ── */
 function openSendLetterModal() {
     document.getElementById('selectSuspect').value = '';
-    document.getElementById('selectWeapon').value  = '';
-    document.getElementById('selectRoom').value    = '';
+    document.getElementById('selectWeapon').value = '';
+    document.getElementById('selectRoom').value = '';
     document.getElementById('sendLetterError').textContent = '';
     document.getElementById('sendLetterModal').classList.add('active');
 }
@@ -280,19 +286,19 @@ function closeSendLetterModal() {
 
 function submitSendLetter() {
     const suspect = document.getElementById('selectSuspect').value;
-    const weapon  = document.getElementById('selectWeapon').value;
-    const room    = document.getElementById('selectRoom').value;
+    const weapon = document.getElementById('selectWeapon').value;
+    const room = document.getElementById('selectRoom').value;
     if (!suspect || !weapon || !room) {
         document.getElementById('sendLetterError').textContent = 'Please select a suspect, weapon, and room.';
         return;
     }
     // Emit to server instead of handling locally
     socket.emit('send_letter', {
-        room:       roomCode,
+        room: roomCode,
         session_id: sessionId,
-        suspect:    suspect,
-        weapon:     weapon,
-        room_name:  room
+        suspect: suspect,
+        weapon: weapon,
+        room_name: room
     });
     closeSendLetterModal();
     requestTurnEnd();
@@ -301,8 +307,8 @@ function submitSendLetter() {
 /* ── Final Guess Modal ── */
 function openFinalGuessModal() {
     document.getElementById('guessSuspect').value = '';
-    document.getElementById('guessWeapon').value  = '';
-    document.getElementById('guessRoom').value    = '';
+    document.getElementById('guessWeapon').value = '';
+    document.getElementById('guessRoom').value = '';
     document.getElementById('finalGuessError').textContent = '';
     document.getElementById('finalGuessModal').classList.add('active');
 }
@@ -313,8 +319,8 @@ function closeFinalGuessModal() {
 
 function submitFinalGuess() {
     const suspect = document.getElementById('guessSuspect').value;
-    const weapon  = document.getElementById('guessWeapon').value;
-    const room    = document.getElementById('guessRoom').value;
+    const weapon = document.getElementById('guessWeapon').value;
+    const room = document.getElementById('guessRoom').value;
     if (!suspect || !weapon || !room) {
         document.getElementById('finalGuessError').textContent = 'Please select a suspect, weapon, and room.';
         return;
@@ -333,7 +339,7 @@ let leaderboardEntry = null;
 
 function showResult(won, username) {
     if (won) leaderboardEntry = [username, timerSeconds];
-    document.getElementById('resultTitle').textContent   = won ? '🎉 You Win!'  : '💀 You Lose!';
+    document.getElementById('resultTitle').textContent = won ? '🎉 You Win!' : '💀 You Lose!';
     document.getElementById('resultMessage').textContent = won
         ? `Congratulations ${username}! You cracked the case in ${formatTime(timerSeconds)}.`
         : `Better luck next time, ${username}. The truth remains hidden…`;
@@ -352,12 +358,12 @@ function formatTime(s) {
 
 /* ── Dice Roll ── */
 const DICE_PATTERNS = {
-    1: [[1,1]],
-    2: [[0,0],[2,2]],
-    3: [[0,0],[1,1],[2,2]],
-    4: [[0,0],[0,2],[2,0],[2,2]],
-    5: [[0,0],[0,2],[1,1],[2,0],[2,2]],
-    6: [[0,0],[0,2],[1,0],[1,2],[2,0],[2,2]]
+    1: [[1, 1]],
+    2: [[0, 0], [2, 2]],
+    3: [[0, 0], [1, 1], [2, 2]],
+    4: [[0, 0], [0, 2], [2, 0], [2, 2]],
+    5: [[0, 0], [0, 2], [1, 1], [2, 0], [2, 2]],
+    6: [[0, 0], [0, 2], [1, 0], [1, 2], [2, 0], [2, 2]]
 };
 
 function renderDiceDots(n) {
@@ -374,8 +380,8 @@ function renderDiceDots(n) {
 
 function rollDice() {
     if (!isLocalPlayersTurn()) return;
-    const btn    = document.getElementById('diceRollBtn');
-    const face   = document.getElementById('diceFace');
+    const btn = document.getElementById('diceRollBtn');
+    const face = document.getElementById('diceFace');
     const result = document.getElementById('diceResult');
     btn.disabled = true;
     result.textContent = '';
@@ -408,7 +414,7 @@ function closeDiceModal() {
     document.getElementById('diceModal').classList.remove('active');
 }
 
-socket.on('deal_hand', function(data) {
+socket.on('deal_hand', function (data) {
     myCards = data.hand;
     generateCards();
 });
@@ -472,31 +478,36 @@ socket.on('dice_rolled', (data) => {
     }
 });
 
+socket.on('left_game', () => {
+    // Server confirmed that this player has left the game
+    window.location.href = 'menu.html';
+});
+
 socket.on('error_msg', (data) => {
     alert(data.msg);
 });
 
 // Server is asking YOU to respond to someone else's suggestion
-socket.on('letter_request', function(data) {
+socket.on('letter_request', function (data) {
     // data: { from_name, suspect, weapon, room, your_matching_cards, sender_session }
     const container = document.getElementById('replyCardsContainer');
     container.innerHTML = '';
     document.getElementById('replyModalTitle').textContent = `Reply to ${data.from_name}`;
 
     // Store sender session so we can send it back with the reply
-    container.dataset.senderSession  = data.sender_session;
-    container.dataset.responderName  = // your own name
+    container.dataset.senderSession = data.sender_session;
+    container.dataset.responderName = // your own name
         (playersData[localPlayerIndex] || {}).name || 'Unknown';
 
     selectedReplyCard = undefined;
 
     // Only show cards that actually match — the server already filtered these
     data.your_matching_cards.forEach(cardName => {
-        const el         = document.createElement('div');
-        el.className     = 'reply-card-option';
-        el.textContent   = cardName;
+        const el = document.createElement('div');
+        el.className = 'reply-card-option';
+        el.textContent = cardName;
         el.dataset.value = cardName;
-        el.onclick       = () => selectReplyCard(el);
+        el.onclick = () => selectReplyCard(el);
         container.appendChild(el);
     });
 
@@ -504,7 +515,7 @@ socket.on('letter_request', function(data) {
 });
 
 // Server is telling YOU (the sender) what the result was
-socket.on('letter_result', function(data) {
+socket.on('letter_result', function (data) {
     // data: { responder_name, card_shown, nobody_disproved }
     let bodyHtml;
     if (data.nobody_disproved) {
@@ -513,7 +524,7 @@ socket.on('letter_result', function(data) {
         bodyHtml = `<p><strong>${data.responder_name}</strong> showed you: <strong>${data.card_shown || 'no card'}</strong></p>`;
     }
     document.getElementById('modalTitle').textContent = 'Letter Result';
-    document.getElementById('modalBody').innerHTML    = bodyHtml;
+    document.getElementById('modalBody').innerHTML = bodyHtml;
     // Hide the Reply button — this is a results view
     document.querySelector('#letterModal .modal-button.primary').style.display = 'none';
     document.getElementById('letterModal').classList.add('active');

@@ -468,6 +468,64 @@ def handle_end_turn(data):
     socketio.emit('turn_update', {'turn_index': room_data['turn_index']}, room=room)
 
 
+@socketio.on('leave_game')
+def handle_leave_game(data):
+    room = data.get('room')
+    session_id = data.get('session_id') or sid_to_session.get(request.sid)
+
+    if not room or room not in rooms or not session_id:
+        emit('left_game')
+        return
+
+    room_data = rooms[room]
+    players = room_data.get('players', [])
+
+    leaving_index = None
+    for i, p in enumerate(players):
+        if p.get('session_id') == session_id:
+            leaving_index = i
+            break
+
+    # Clear this player's room info from their session
+    if session_exists(session_id):
+        update_session(session_id, {'room_code': None, 'is_host': False})
+
+    # If the player isn't actually in this room, just acknowledge the leave
+    if leaving_index is None:
+        emit('left_game')
+        return
+
+    was_host = room_data.get('host_session') == session_id
+
+    # Remove the player from the room
+    del players[leaving_index]
+
+    if not players:
+        # No one left in the room — clean up the room and game manager
+        if room in game_managers:
+            del game_managers[room]
+        del rooms[room]
+    else:
+        # Reassign host if needed
+        if was_host:
+            new_host_session = players[0].get('session_id')
+            room_data['host_session'] = new_host_session
+            if session_exists(new_host_session):
+                update_session(new_host_session, {'is_host': True})
+
+        # Adjust turn index to remain valid
+        turn_index = room_data.get('turn_index', 0)
+        if turn_index >= leaving_index and turn_index > 0:
+            turn_index -= 1
+        room_data['turn_index'] = turn_index % len(players)
+
+        socketio.emit('board_update', {'players': players}, room=room)
+        socketio.emit('turn_update', {'turn_index': room_data['turn_index']}, room=room)
+
+    # Tell the leaving client it's safe to navigate away
+    emit('left_game')
+
+
 @socketio.on('send_letter')
 def handle_send_letter(data):
     room       = data.get('room')

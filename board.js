@@ -12,10 +12,10 @@ const ns = "http://www.w3.org/2000/svg";
 const tileMap = new Map();
 const walkableTiles = new Set();
 
-const boardWidth  = cols * size;
+const boardWidth = cols * size;
 const boardHeight = rows * size;
 
-svg.setAttribute("width",  boardWidth  + padding * 2);
+svg.setAttribute("width", boardWidth + padding * 2);
 svg.setAttribute("height", boardHeight + padding * 2);
 
 let currentPlayerIndex = 0;
@@ -30,26 +30,26 @@ let movementInProgress = false;
 let movementPath = [];
 
 const rooms = [
-    { name: "Kitchen",       r: 0,  c: 0,  w: 6, h: 6, doors: [[5,1],[2,5]],  isCorner: true,  trapdoor: { row: 1,  col: 1  }, destinationTile: { row: 2,  col: 2  } },
-    { name: "Ballroom",      r: 0,  c: 9,  w: 7, h: 6, doors: [[5,3]] },
-    { name: "Conservatory",  r: 0,  c: 19, w: 6, h: 6, doors: [[5,3],[2,0]],  isCorner: true,  trapdoor: { row: 1,  col: 23 }, destinationTile: { row: 2,  col: 22 } },
-    { name: "Dining Room",   r: 9,  c: 0,  w: 6, h: 7, doors: [[3,5]] },
-    { name: "Center",        r: 9,  c: 9,  w: 7, h: 7, doors: [[0,3]] },
-    { name: "Billiard Room", r: 9,  c: 18, w: 7, h: 7, doors: [[3,0]] },
-    { name: "Lounge",        r: 19, c: 0,  w: 6, h: 6, doors: [[0,1],[3,5]],  isCorner: true,  trapdoor: { row: 23, col: 1  }, destinationTile: { row: 22, col: 2  } },
-    { name: "Hall",          r: 19, c: 9,  w: 7, h: 6, doors: [[0,3]] },
-    { name: "Study",         r: 19, c: 18, w: 7, h: 6, doors: [[0,3],[3,0]],  isCorner: true,  trapdoor: { row: 23, col: 23 }, destinationTile: { row: 22, col: 22 } }
+    { name: "Kitchen", r: 0, c: 0, w: 6, h: 6, doors: [[5, 1], [2, 5]], isCorner: true, trapdoor: { row: 1, col: 1 }, destinationTile: { row: 2, col: 2 } },
+    { name: "Ballroom", r: 0, c: 9, w: 7, h: 6, doors: [[5, 3]] },
+    { name: "Conservatory", r: 0, c: 19, w: 6, h: 6, doors: [[5, 3], [2, 0]], isCorner: true, trapdoor: { row: 1, col: 23 }, destinationTile: { row: 2, col: 22 } },
+    { name: "Dining Room", r: 9, c: 0, w: 6, h: 7, doors: [[3, 5]] },
+    { name: "Center", r: 9, c: 9, w: 7, h: 7, doors: [[0, 3]] },
+    { name: "Billiard Room", r: 9, c: 18, w: 7, h: 7, doors: [[3, 0]] },
+    { name: "Lounge", r: 19, c: 0, w: 6, h: 6, doors: [[0, 1], [3, 5]], isCorner: true, trapdoor: { row: 23, col: 1 }, destinationTile: { row: 22, col: 2 } },
+    { name: "Hall", r: 19, c: 9, w: 7, h: 6, doors: [[0, 3]] },
+    { name: "Study", r: 19, c: 18, w: 7, h: 6, doors: [[0, 3], [3, 0]], isCorner: true, trapdoor: { row: 23, col: 23 }, destinationTile: { row: 22, col: 22 } }
 ];
 
 // NOTE: playersData is the board's authoritative list of piece positions.
 // main.js references this same array via getCurrentBoardPlayer() for turn sync.
 const playersData = [
-    { name: "Miss Scarlet",    color: "#d83b3b", row: 2,  col: 2,  piece: null },
-    { name: "Colonel Mustard", color: "#e0b12f", row: 18, col: 0,  piece: null },
-    { name: "Mrs Peacock",     color: "#2e86de", row: 8,  col: 24, piece: null },
-    { name: "Mr Green",        color: "#2ecc71", row: 18, col: 24, piece: null },
-    { name: "Mrs White",       color: "#f8f8e8", row: 24, col: 8,  piece: null },
-    { name: "Professor Plum",  color: "#8e44ad", row: 24, col: 17, piece: null }
+    { name: "Miss Scarlet", color: "#d83b3b", row: 2, col: 2, piece: null },
+    { name: "Colonel Mustard", color: "#e0b12f", row: 18, col: 0, piece: null },
+    { name: "Mrs Peacock", color: "#2e86de", row: 8, col: 24, piece: null },
+    { name: "Mr Green", color: "#2ecc71", row: 18, col: 24, piece: null },
+    { name: "Mrs White", color: "#f8f8e8", row: 24, col: 8, piece: null },
+    { name: "Professor Plum", color: "#8e44ad", row: 24, col: 17, piece: null }
 ];
 
 const CHARACTER_TO_BOARD_NAME = {
@@ -223,10 +223,10 @@ function getExitTilesForRoom(room) {
     return room.doors.map(([dr, dc]) => {
         const doorRow = room.r + dr;
         const doorCol = room.c + dc;
-        if (dr === 0)              return { row: doorRow - 1, col: doorCol };
-        if (dr === room.h - 1)     return { row: doorRow + 1, col: doorCol };
-        if (dc === 0)              return { row: doorRow, col: doorCol - 1 };
-        if (dc === room.w - 1)     return { row: doorRow, col: doorCol + 1 };
+        if (dr === 0) return { row: doorRow - 1, col: doorCol };
+        if (dr === room.h - 1) return { row: doorRow + 1, col: doorCol };
+        if (dc === 0) return { row: doorRow, col: doorCol - 1 };
+        if (dc === room.w - 1) return { row: doorRow, col: doorCol + 1 };
         return null;
     }).filter(Boolean);
 }
@@ -263,9 +263,9 @@ function animatePieceTo(player, newRow, newCol, duration = 300) {
 
 // Clue tiles
 const clueTiles = [
-    { row: 4,  col: 7  },
-    { row: 8,  col: 12 },
-    { row: 6,  col: 17 },
+    { row: 4, col: 7 },
+    { row: 8, col: 12 },
+    { row: 6, col: 17 },
     { row: 16, col: 18 },
     { row: 18, col: 10 }
 ];
@@ -344,7 +344,7 @@ const sendLetterBtn = document.querySelector(".send-letter-btn");
 function showSendLetterButtonAt(x, y) {
     sendLetterBtn.style.display = "block";
     sendLetterBtn.style.left = `${x + 2}px`;
-    sendLetterBtn.style.top  = `${y + 2}px`;
+    sendLetterBtn.style.top = `${y + 2}px`;
 }
 
 function scheduleHideSendLetterButton() {
@@ -354,7 +354,7 @@ function scheduleHideSendLetterButton() {
     }, 80);
 }
 
-sendLetterBtn.addEventListener("mouseenter", () => { hoveringSendButton = true;  clearTimeout(hideLetterButtonTimeout); });
+sendLetterBtn.addEventListener("mouseenter", () => { hoveringSendButton = true; clearTimeout(hideLetterButtonTimeout); });
 sendLetterBtn.addEventListener("mouseleave", () => { hoveringSendButton = false; scheduleHideSendLetterButton(); });
 
 rooms.forEach(room => {
@@ -370,7 +370,7 @@ rooms.forEach(room => {
             const rect = room.element.getBoundingClientRect();
             sendLetterBtn.style.display = "block";
             sendLetterBtn.style.left = `${rect.right + window.scrollX + 6}px`;
-            sendLetterBtn.style.top  = `${rect.top  + window.scrollY + 6}px`;
+            sendLetterBtn.style.top = `${rect.top + window.scrollY + 6}px`;
         }
     });
     room.element.addEventListener("mouseleave", () => {
