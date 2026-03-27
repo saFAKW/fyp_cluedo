@@ -274,9 +274,41 @@ function closeReplyModal() {
 /* ── Send Letter Modal ── */
 function openSendLetterModal() {
     document.getElementById('selectSuspect').value = '';
-    document.getElementById('selectWeapon').value = '';
-    document.getElementById('selectRoom').value = '';
+    document.getElementById('selectWeapon').value  = '';
     document.getElementById('sendLetterError').textContent = '';
+
+    // Restrict room selection if player is in a room (not corridor)
+    let player = null;
+    if (typeof getCurrentBoardPlayer === 'function') {
+        player = getCurrentBoardPlayer();
+    } else if (typeof playersData !== 'undefined' && typeof currentPlayerTurn !== 'undefined') {
+        player = playersData[currentPlayerTurn];
+    }
+    let currentRoom = null;
+    if (player && typeof getRoomAtPosition === 'function') {
+        currentRoom = getRoomAtPosition(player.row, player.col);
+    }
+    const selectRoom = document.getElementById('selectRoom');
+    if (currentRoom && !currentRoom.isCellar) {
+        // Only allow the current room
+        for (let i = 0; i < selectRoom.options.length; i++) {
+            const opt = selectRoom.options[i];
+            if (opt.value === currentRoom.name) {
+                opt.disabled = false;
+                opt.selected = true;
+            } else if (opt.value !== '') {
+                opt.disabled = true;
+                opt.selected = false;
+            }
+        }
+    } else {
+        // In corridor or cellar, allow all rooms
+        for (let i = 0; i < selectRoom.options.length; i++) {
+            selectRoom.options[i].disabled = false;
+            selectRoom.options[i].selected = false;
+        }
+        selectRoom.value = '';
+    }
     document.getElementById('sendLetterModal').classList.add('active');
 }
 
